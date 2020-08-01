@@ -59,3 +59,5 @@ class UITVSFC(Dataset):
     def __getitem__(self, item):
         return self.sents[item].strip(), int(self.sentiments[item])
 
+    def __len__(self):
+        return len(self.sents)
