@@ -36,6 +36,7 @@ def config_parsing(arg):
     opts = namedtuple('Config', data.keys())(*data.values())
     return opts
 
+
 def diff(x, y):
     correct, incorrect = 0, 0
     for i, j in zip(x, y):
@@ -52,7 +53,7 @@ if __name__ == '__main__':
 
     enc = PhoBertEncoder()
     net = SentimentAnalysisModel(enc, 768, 2).to(opts.device)
-    writer.add_graph(net)
+    # writer.add_graph(net)
 
     dataset = VLSP2016()
     test_dataset = VLSP2016(file='SA-2016.test')
@@ -66,15 +67,16 @@ if __name__ == '__main__':
 
     logger.info('Start training...')
     for epoch in range(opts.epochs):
-        correct, incorrect = 0, 0
+        correct, total = 0, 0
         for idx, item in enumerate(data_loader):
             sents, labels = item[0].to(opts.device), \
                             item[1].to(opts.device)
             optimizer.zero_grad()
             preds = net(sents)
-            lb_preds = torch.argmax(preds, 1)
-            a, b = diff(lb_preds, labels)
-            correct, incorrect = correct + a, incorrect + b
+
+            _, predicted = torch.max(preds.data, 1)
+            total += labels.size(0)
+            correct = (predicted == labels).sum().item()
 
             loss = criterion(preds, labels)
             loss.backward()
@@ -82,17 +84,18 @@ if __name__ == '__main__':
 
             logger.info(f'[{idx}/{len(data_loader)}] Training loss: {loss.item()}')
 
-        logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {correct/(correct + incorrect)}')
+        logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {correct/total}')
 
         with torch.no_grad():
-            correct, incorrect = 0, 0
+            correct, total = 0, 0
             for idx, item in enumerate(test_data_loader):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
                 preds = net(sents)
                 loss = criterion(preds, labels)
-                lb_preds = torch.argmax(preds, 1)
-                a, b = diff(lb_preds, labels)
-                correct, incorrect = correct + a, incorrect + b
 
-            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {correct/(correct + incorrect)}')
+                _, predicted = torch.max(preds.data, 1)
+                total += labels.size(0)
+                correct = (predicted == labels).sum().item()
+
+            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {correct/total}')
