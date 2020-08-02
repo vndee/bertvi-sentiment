@@ -1,6 +1,5 @@
 import os
 import torch
-import datetime
 import torch.nn as nn
 from collections import namedtuple
 from logger import get_logger
@@ -9,7 +8,6 @@ from model import SentimentAnalysisModel
 from phobert import PhoBertEncoder
 from loader import VLSP2016
 from torch.utils.data import DataLoader
-# from torch.utils.tensorboard import SummaryWriter
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -37,17 +35,6 @@ def config_parsing(arg):
     return opts
 
 
-def diff(x, y):
-    correct, incorrect = 0, 0
-    for i, j in zip(x, y):
-        if i == j:
-            correct = correct + 1
-        else:
-            incorrect = incorrect + 1
-
-    return correct, incorrect
-
-
 if __name__ == '__main__':
     opts = config_parsing(config)
 
@@ -55,8 +42,8 @@ if __name__ == '__main__':
     net = SentimentAnalysisModel(enc, 768, 2).to(opts.device)
     # writer.add_graph(net)
 
-    dataset = VLSP2016()
-    test_dataset = VLSP2016(file='SA-2016.test')
+    dataset = VLSP2016(file='SA-2016.dev')
+    test_dataset = VLSP2016(file='SA-2016.dev')
     data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
     test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
 
@@ -76,7 +63,7 @@ if __name__ == '__main__':
 
             _, predicted = torch.max(preds.data, 1)
             total += labels.size(0)
-            correct = (predicted == labels).sum().item()
+            correct += (predicted == labels).sum().item()
 
             loss = criterion(preds, labels)
             loss.backward()
@@ -84,6 +71,7 @@ if __name__ == '__main__':
 
             logger.info(f'[{idx}/{len(data_loader)}] Training loss: {loss.item()}')
 
+        logger.info(f'correct: {correct} | total: {total}')
         logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {correct/total}')
 
         with torch.no_grad():
@@ -96,6 +84,6 @@ if __name__ == '__main__':
 
                 _, predicted = torch.max(preds.data, 1)
                 total += labels.size(0)
-                correct = (predicted == labels).sum().item()
+                correct += (predicted == labels).sum().item()
 
             logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {correct/total}')
