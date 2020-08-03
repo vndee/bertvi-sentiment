@@ -1,13 +1,13 @@
-device: cpu
+device: cuda
 dataset: vlsp2016
 encoder: phobert
 epochs: 10
 batch_size: 2
 feature_shape: 768
 num_classes: 2
-max_length: 512
+max_length: 259
 tokenizer_type: phobert
 learning_rate: 0.001
 momentum: 0.9
 num_workers: 4
-pretrained: outputs/phobert_vlsp2016/checkpoints/checkpoint_best.vndee
+#pretrained: outputs/phobert_vlsp2016/checkpoints/checkpoint_best.vndee

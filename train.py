@@ -57,7 +57,7 @@ if __name__ == '__main__':
         enc = BertEncoder()
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
 
-    if opts.__getattribute__('pretrained'):
+    if hasattr(opts, 'pretrained'):
         net = torch.load(opts.pretrained)
         logger.info(f'Loaded pretrained model {opts.encoder} for {opts.encoder}')
 
@@ -124,9 +124,10 @@ if __name__ == '__main__':
                 preds = net(sents)
             except Exception as ex:
                 logger.exception(ex)
-                logger.info(sents)
+                for i in sents[0]:
+                    print(int(i))
                 logger.info(labels)
-                break
+                continue
 
             loss = criterion(preds, labels)
 
@@ -168,7 +169,7 @@ if __name__ == '__main__':
                     logger.exception(ex)
                     logger.info(sents)
                     logger.info(labels)
-                    break
+                    continue
 
                 loss = criterion(preds, labels)
 
