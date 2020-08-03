@@ -1,12 +1,13 @@
 import os
 import torch
 import torch.nn as nn
-from collections import namedtuple
-from logger import get_logger
 from yaml import load
+from loader import VLSP2016, UITVSFC, AIVIVN
+from logger import get_logger
+from collections import namedtuple
 from model import SentimentAnalysisModel
 from phobert import PhoBertEncoder
-from loader import VLSP2016
+from bert import BertEncoder
 from torch.utils.data import DataLoader
 
 try:
@@ -15,7 +16,6 @@ except Exception as ex:
     from yaml import Loader, Dumper
 
 logger = get_logger('Trainer')
-# writer = SummaryWriter(os.path.join('runs', f'nics2020_{datetime.datetime.now()}'))
 
 configs = [
     'phobert_vlsp_2016.yaml',
@@ -26,7 +26,7 @@ configs = [
     'multilingual_bert_vlsp_2016.yaml'
 ]
 
-config = os.path.join('config', configs[0])
+config = os.path.join('config', configs[5])
 
 
 def config_parsing(arg):
@@ -38,12 +38,23 @@ def config_parsing(arg):
 if __name__ == '__main__':
     opts = config_parsing(config)
 
-    enc = PhoBertEncoder()
-    net = SentimentAnalysisModel(enc, 768, 2).to(opts.device)
-    # writer.add_graph(net)
+    if opts.encoder == 'phobert':
+        enc = PhoBertEncoder()
+        net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
+    elif opts.encoder == 'bert':
+        enc = BertEncoder()
+        net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
 
-    dataset = VLSP2016(file='SA-2016.dev')
-    test_dataset = VLSP2016(file='SA-2016.dev')
+    if opts.dataset == 'vlsp2016':
+        dataset = VLSP2016(file='SA-2016.dev')
+        test_dataset = VLSP2016(file='SA-2016.dev')
+    elif opts.dataset == 'uit-vsfc':
+        dataset = UITVSFC(file='dev')
+        test_dataset = UITVSFC(file='dev')
+    else:
+        dataset = AIVIVN(file='test.crash')
+        test_dataset = AIVIVN(file='test.crash')
+
     data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
     test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
 
@@ -58,6 +69,7 @@ if __name__ == '__main__':
         for idx, item in enumerate(data_loader):
             sents, labels = item[0].to(opts.device), \
                             item[1].to(opts.device)
+
             optimizer.zero_grad()
             preds = net(sents)
 
@@ -79,6 +91,7 @@ if __name__ == '__main__':
             for idx, item in enumerate(test_data_loader):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
+
                 preds = net(sents)
                 loss = criterion(preds, labels)
 
