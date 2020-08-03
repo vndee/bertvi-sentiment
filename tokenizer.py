@@ -10,7 +10,6 @@ def padding(x, max_length):
     temp = torch.zeros(max_length, dtype=torch.long)
     if x.shape[0] > max_length:
         x = x[: max_length]
-    print(x.shape)
     temp[0: x.shape[0]] = x
     return temp
 
@@ -49,4 +48,4 @@ class BertViTokenizer:
 
     def __call__(self, x):
         input_ids = torch.tensor([self.tokenizer.encode(x, add_special_tokens=True)])
-        return padding(input_ids.unsqueeze(0), self.max_length)
+        return padding(input_ids.squeeze(0), self.max_length)

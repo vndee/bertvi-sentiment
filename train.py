@@ -26,7 +26,7 @@ configs = [
     'multilingual_bert_vlsp_2016.yaml'
 ]
 
-config = os.path.join('config', configs[0])
+config = os.path.join('config', configs[5])
 
 
 def config_parsing(arg):
