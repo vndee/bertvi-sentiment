@@ -179,7 +179,8 @@ if __name__ == '__main__':
     l4 = ax2.plot(df['epoch'].astype(int).tolist(), df['val_acc'].tolist(), 'y', label=labels[3])[0]
 
     fig.legend([l1, l2, l3, l4],
-               labels)
+               labels,
+               bbox_to_anchor=(0.5, 0.2))
 
     fig.tight_layout()
     plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.png'),
