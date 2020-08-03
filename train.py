@@ -1,7 +1,9 @@
 import os
 import torch
+import pandas as pd
 import torch.nn as nn
 from yaml import load
+import matplotlib.pyplot as plt
 from loader import VLSP2016, UITVSFC, AIVIVN
 from logger import get_logger
 from collections import namedtuple
@@ -16,6 +18,7 @@ except Exception as ex:
     from yaml import Loader, Dumper
 
 logger = get_logger('Trainer')
+experiment_path = 'outputs'
 
 configs = [
     'phobert_vlsp_2016.yaml',
@@ -80,9 +83,13 @@ if __name__ == '__main__':
                                 lr=opts.learning_rate,
                                 momentum=opts.momentum)
 
+    df = pd.DataFrame(columns=['epoch', 'train_loss', 'train_acc', 'val_loss', 'val_acc'])
     logger.info('Start training...')
+    best_checkpoint = 0.0
+
     for epoch in range(opts.epochs):
         correct, total = 0, 0
+        total_loss = 0.0
         for idx, item in enumerate(data_loader):
             sents, labels = item[0].to(opts.device), \
                             item[1].to(opts.device)
@@ -98,13 +105,17 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
+            total_loss = total_loss + loss.item()
             logger.info(f'[{idx}/{len(data_loader)}] Training loss: {loss.item()}')
 
-        logger.info(f'correct: {correct} | total: {total}')
-        logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {correct/total}')
+        train_loss = float(total_loss / total)
+        train_acc = float(correct / total)
+
+        logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | Training loss: {train_loss}')
 
         with torch.no_grad():
             correct, total = 0, 0
+            val_loss = 0.0
             for idx, item in enumerate(test_data_loader):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
@@ -115,5 +126,17 @@ if __name__ == '__main__':
                 _, predicted = torch.max(preds.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
+                val_loss += loss.item()
 
-            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {correct/total}')
+            val_loss = float(val_loss / total)
+            val_acc = float(correct / total)
+
+            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {val_acc} | Training loss: {train_loss}')
+            df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc]
+
+            if val_acc > best_checkpoint:
+                logger.info(f'New state-of-the-art model detected. Saving to {experiment_path}')
+                torch.save(net, os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
+
+    df.to_csv(os.path.join(experiment_path, 'history.csv'))
+    df.plot()
