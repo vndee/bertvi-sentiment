@@ -26,7 +26,7 @@ configs = [
     'multilingual_bert_vlsp_2016.yaml'
 ]
 
-config = os.path.join('config', configs[3])
+config = os.path.join('config', configs[0])
 
 
 def config_parsing(arg):
@@ -37,6 +37,7 @@ def config_parsing(arg):
 
 if __name__ == '__main__':
     opts = config_parsing(config)
+    logger.info(opts)
 
     if opts.encoder == 'phobert':
         enc = PhoBertEncoder()
@@ -46,22 +47,38 @@ if __name__ == '__main__':
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
 
     if opts.dataset == 'vlsp2016':
-        dataset = VLSP2016(file='SA-2016.dev')
-        test_dataset = VLSP2016(file='SA-2016.dev')
+        dataset = VLSP2016(file='SA-2016.dev',
+                           max_length=opts.max_length,
+                           tokenizer_type=opts.tokenizer_type)
+        test_dataset = VLSP2016(file='SA-2016.dev',
+                                max_length=opts.max_length,
+                                tokenizer_type=opts.tokenizer_type)
     elif opts.dataset == 'uit-vsfc':
-        dataset = UITVSFC(file='dev')
-        test_dataset = UITVSFC(file='dev')
+        dataset = UITVSFC(file='dev',
+                          max_length=opts.max_length,
+                          tokenizer_type=opts.tokenizer_type)
+        test_dataset = UITVSFC(file='dev',
+                               max_length=opts.max_length,
+                               tokenizer_type=opts.tokenzier_type)
     else:
-        dataset = AIVIVN(file='train.crash')
-        test_dataset = AIVIVN(file='train.crash')
+        dataset = AIVIVN(file='train.crash',
+                         max_length=opts.max_length,
+                         tokenizer_type=opts.tokenizer_type,
+                         pivot=opts.pivot,
+                         train=True)
+        test_dataset = AIVIVN(file='train.crash',
+                              max_length=opts.max_length,
+                              tokenizer_type=opts.tokenizer_type,
+                              pivot=opts.pivot,
+                              train=False)
 
-    data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
-    test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
+    data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
+    test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(),
-                                lr=0.001,
-                                momentum=0.9)
+                                lr=opts.learning_rate,
+                                momentum=opts.momentum)
 
     logger.info('Start training...')
     for epoch in range(opts.epochs):

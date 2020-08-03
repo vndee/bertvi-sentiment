@@ -53,12 +53,18 @@ class AIVIVN(Dataset):
                  file='train.crash',
                  path=os.path.join('data', 'AIVIVN'),
                  max_length=512,
-                 tokenizer_type=BERTvi[0]):
+                 tokenizer_type=BERTvi[0],
+                 pivot=0.8,
+                 train=True):
         super(AIVIVN, self).__init__()
         with open(os.path.join(path, file), mode='r', encoding='utf-8-sig') as stream:
             self.train = stream.read()
 
         self.train = self.train.split('\n\ntrain_')
+        if train is True:
+            self.train = self.train[: int(len(self.train) * pivot)]
+        else:
+            self.train = self.train[int(len(self.train) * pivot):]
 
         self.max_length = max_length
 
