@@ -149,9 +149,9 @@ if __name__ == '__main__':
             val_acc = float(correct / total)
 
             t2 = time.time()
-            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {val_acc} | '
-                        f'Training loss: {train_loss} | '
-                        f'Evaluation time: {t2 - t1}s')
+            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
+                        f'Validation loss: {train_loss} | '
+                        f'Validation time: {t2 - t1}s')
             df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc, t1 - t0, t2 - t1]
 
             if val_acc > best_checkpoint:
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     # plot figure
     labels = ['Train loss', 'Validation loss', 'Train accuracy', 'Validation accuracy']
     fig, ax1 = plt.subplots()
-    fig.xticks(df['epoch'].astype(int).tolist())
+    # plt.xticks(df['epoch'].astype(int).tolist())
 
     ax1.set_xlabel('epoch(s)')
     ax1.set_ylabel('loss')
