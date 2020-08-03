@@ -120,7 +120,7 @@ if __name__ == '__main__':
             optimizer.step()
 
             total_loss = total_loss + loss.item()
-            logger.info(f'[{idx}/{len(data_loader)}] Training loss: {loss.item()}')
+            logger.info(f'[{idx + 1}/{len(data_loader)}] Training loss: {loss.item()}')
 
         train_loss = float(total_loss / total)
         train_acc = float(correct / total)
@@ -162,21 +162,24 @@ if __name__ == '__main__':
     df.to_csv(os.path.join(experiment_path, 'history.csv'))
 
     # plot figure
+    labels = ['Train loss', 'Validation loss', 'Train accuracy', 'Validation accuracy']
     fig, ax1 = plt.subplots()
+    fig.xticks(df['epoch'].astype(int).tolist())
+
     ax1.set_xlabel('epoch(s)')
     ax1.set_ylabel('loss')
-    ax1.plot(df['epoch'].astype(int).tolist(), df['train_loss'].tolist(), 'b', label='Train loss')
-    ax1.plot(df['epoch'].astype(int).tolist(), df['val_loss'].tolist(), 'g', label='Validation loss')
+
+    l1 = ax1.plot(df['epoch'].astype(int).tolist(), df['train_loss'].tolist(), 'b', label=labels[0])[0]
+    l2 = ax1.plot(df['epoch'].astype(int).tolist(), df['val_loss'].tolist(), 'g', label=labels[1])[0]
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('accuracy')
-    ax2.plot(df['epoch'].astype(int).tolist(), df['train_acc'].tolist(), 'r', label='Train accuracy')
-    ax2.plot(df['epoch'].astype(int).tolist(), df['val_acc'].tolist(), 'y', label='Validation accuracy')
 
-    handles = [ax.get_legend_handles_labels() for ax in fig.axes]
-    print(handles)
-    labels = ['1', '2', '3', '4']
-    fig.legend(handles, labels, loc='upper center')
+    l3 = ax2.plot(df['epoch'].astype(int).tolist(), df['train_acc'].tolist(), 'r', label=labels[2])[0]
+    l4 = ax2.plot(df['epoch'].astype(int).tolist(), df['val_acc'].tolist(), 'y', label=labels[3])[0]
+
+    fig.legend([l1, l2, l3, l4],
+               labels)
 
     fig.tight_layout()
     plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.png'),
