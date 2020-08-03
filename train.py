@@ -135,8 +135,9 @@ if __name__ == '__main__':
             df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc]
 
             if val_acc > best_checkpoint:
-                logger.info(f'New state-of-the-art model detected. Saving to {experiment_path}')
+                logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
                 torch.save(net, os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
 
     df.to_csv(os.path.join(experiment_path, 'history.csv'))
     df.plot()
+    plt.show()
