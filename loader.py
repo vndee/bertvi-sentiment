@@ -34,6 +34,7 @@ class VLSP2016(Dataset):
             self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
 
         logger.info('Loaded VLSP-2016')
+        logger.info(f'There are {len(self.df)} in {file} dataset.')
 
     def __getitem__(self, item):
         text = self.df.iloc[item, 0].encode('utf-8')
@@ -54,7 +55,9 @@ class AIVIVN(Dataset):
             self.train = stream.read()
 
         self.train = self.train.split('\n\ntrain_')
+
         logger.info('Loaded AIVIVN')
+        logger.info(f'There are {len(self.train)} in {file} dataset')
 
     def __getitem__(self, item):
         sample = self.train[item].strip()
@@ -67,7 +70,11 @@ class AIVIVN(Dataset):
 
 
 class UITVSFC(Dataset):
-    def __init__(self, file='train', path=os.path.join('data', 'UIT-VSFC')):
+    def __init__(self,
+                 file='train',
+                 path=os.path.join('data', 'UIT-VSFC'),
+                 max_length=512,
+                 tokenizer_type=BERTvi[0]):
         super(UITVSFC, self).__init__()
         with open(os.path.join(path, file, 'sents.txt'), mode='r', encoding='utf-8-sig') as stream:
             self.sents = stream.read().strip().split('\n')
@@ -76,10 +83,19 @@ class UITVSFC(Dataset):
         with open(os.path.join(path, file, 'topics.txt'), mode='r', encoding='utf-8-sig') as stream:
             self.topics = stream.read().strip().split('\n')
 
+        self.max_length = max_length
+
+        self.tokenizer_type = tokenizer_type
+        if tokenizer_type == BERTvi[0]:
+            self.tokenizer = PhoBertTokenizer(max_length=self.max_length)
+        else:
+            self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
+
         logger.info('Loaded UIT-VSFC')
+        logger.info(f'There are {len(self.sents)} in {file} dataset.')
 
     def __getitem__(self, item):
-        return self.sents[item].strip(), int(self.sentiments[item])
+        return self.tokenizer(self.sents[item].strip()), int(self.sentiments[item])
 
     def __len__(self):
         return len(self.sents)

@@ -1,0 +1,7 @@
+device: cpu
+dataset: uit-vsfc
+encoder: bert
+epochs: 10
+batch_size: 2
+feature_shape: 768
+num_classes: 3
