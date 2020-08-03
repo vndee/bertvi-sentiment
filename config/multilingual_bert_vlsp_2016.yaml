@@ -1,5 +1,5 @@
 device: cpu
-dataset: aivivn
+dataset: vlsp2016
 encoder: bert
 epochs: 10
 batch_size: 2
