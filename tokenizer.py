@@ -11,6 +11,7 @@ def padding(x, max_length):
     if x.shape[0] > max_length:
         x = x[: max_length]
     temp[0: x.shape[0]] = x
+    temp[x.shape[0] - 1] = 0
     return temp
 
 
@@ -34,6 +35,7 @@ class PhoBertTokenizer:
         self.max_length = max_length
 
     def __call__(self, x):
+        print(x)
         line = self.rdr_segmenter.tokenize(x)
         line = ' '.join([' '.join(sent) for sent in line])
         subwords = '<s> ' + self.bpe.encode(line) + ' </s>'
@@ -43,9 +45,16 @@ class PhoBertTokenizer:
 
 class BertViTokenizer:
     def __init__(self, max_length=512, shortcut_pretrained='bert-base-multilingual-cased'):
-        self.tokenizer = BertTokenizer.from_pretrained(shortcut_pretrained)
+        self.tokenizer = BertTokenizer.from_pretrained(shortcut_pretrained,
+                                                       max_length=max_length,
+                                                       padding_side='right',
+                                                       truncation='longest_first')
         self.max_length = max_length
 
     def __call__(self, x):
-        input_ids = torch.tensor([self.tokenizer.encode(x, add_special_tokens=True)])
-        return padding(input_ids.squeeze(0), self.max_length)
+        input_ids = torch.tensor([self.tokenizer.encode(x,
+                                                        add_special_tokens=True,
+                                                        padding='max_length',
+                                                        truncation='longest_first',
+                                                        max_length=self.max_length)])
+        return input_ids.squeeze(0)

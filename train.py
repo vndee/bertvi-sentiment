@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch.nn as nn
+from tqdm import tqdm
 from yaml import load
 import matplotlib.pyplot as plt
 from loader import VLSP2016, UITVSFC, AIVIVN
@@ -33,7 +34,7 @@ configs = [
 ]
 
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=os.path.join('config', configs[5]))
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[0]))
 args = arg.parse_args()
 
 
@@ -115,12 +116,19 @@ if __name__ == '__main__':
                             item[1].to(opts.device)
 
             optimizer.zero_grad()
-            preds = net(sents)
+            try:
+                preds = net(sents)
+            except Exception as ex:
+                logger.exception(ex)
+                logger.info(sents)
+                logger.info(labels)
+                break
+
             loss = criterion(preds, labels)
 
             if opts.device == 'cuda':
-                preds = preds.cpu().detach().numpy()
-                labels = labels.cpu().detach().numpy()
+                preds = preds.detach().cpu().numpy()
+                labels = labels.detach().cpu().numpy()
             else:
                 preds = preds.detach().numpy()
                 labels = labels.detach().numpy()
@@ -146,16 +154,23 @@ if __name__ == '__main__':
         with torch.no_grad():
             correct, total = 0, 0
             val_loss = 0.0
-            for idx, item in enumerate(test_data_loader):
+            for idx, item in enumerate(tqdm(test_data_loader)):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
 
-                preds = net(sents)
+                try:
+                    preds = net(sents)
+                except Exception as ex:
+                    logger.exception(ex)
+                    logger.info(sents)
+                    logger.info(labels)
+                    break
+
                 loss = criterion(preds, labels)
 
                 if opts.device == 'cuda':
-                    preds = preds.cpu().detach().numpy()
-                    labels = labels.cpu().detach().numpy()
+                    preds = preds.detach().cpu().numpy()
+                    labels = labels.detach().cpu().numpy()
                 else:
                     preds = preds.detach().numpy()
                     labels = labels.detach().numpy()
