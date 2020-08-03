@@ -124,9 +124,6 @@ if __name__ == '__main__':
                 preds = net(sents)
             except Exception as ex:
                 logger.exception(ex)
-                for i in sents[0]:
-                    print(int(i))
-                logger.info(labels)
                 continue
 
             loss = criterion(preds, labels)
@@ -167,8 +164,6 @@ if __name__ == '__main__':
                     preds = net(sents)
                 except Exception as ex:
                     logger.exception(ex)
-                    logger.info(sents)
-                    logger.info(labels)
                     continue
 
                 loss = criterion(preds, labels)
