@@ -49,12 +49,24 @@ class VLSP2016(Dataset):
 
 
 class AIVIVN(Dataset):
-    def __init__(self, file='train.crash', path=os.path.join('data', 'AIVIVN')):
+    def __init__(self,
+                 file='train.crash',
+                 path=os.path.join('data', 'AIVIVN'),
+                 max_length=512,
+                 tokenizer_type=BERTvi[0]):
         super(AIVIVN, self).__init__()
         with open(os.path.join(path, file), mode='r', encoding='utf-8-sig') as stream:
             self.train = stream.read()
 
         self.train = self.train.split('\n\ntrain_')
+
+        self.max_length = max_length
+
+        self.tokenizer_type = tokenizer_type
+        if tokenizer_type == BERTvi[0]:
+            self.tokenizer = PhoBertTokenizer(max_length=self.max_length)
+        else:
+            self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
 
         logger.info('Loaded AIVIVN')
         logger.info(f'There are {len(self.train)} in {file} dataset')
@@ -63,7 +75,7 @@ class AIVIVN(Dataset):
         sample = self.train[item].strip()
         sent = sample[8:-3].strip()
         label = int(sample[-1:])
-        return sent, label
+        return self.tokenizer(sent), label
 
     def __len__(self):
         return len(self.train)

@@ -26,7 +26,7 @@ configs = [
     'multilingual_bert_vlsp_2016.yaml'
 ]
 
-config = os.path.join('config', configs[4])
+config = os.path.join('config', configs[3])
 
 
 def config_parsing(arg):
@@ -52,8 +52,8 @@ if __name__ == '__main__':
         dataset = UITVSFC(file='dev')
         test_dataset = UITVSFC(file='dev')
     else:
-        dataset = AIVIVN(file='test.crash')
-        test_dataset = AIVIVN(file='test.crash')
+        dataset = AIVIVN(file='train.crash')
+        test_dataset = AIVIVN(file='train.crash')
 
     data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
     test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=4, drop_last=True)
