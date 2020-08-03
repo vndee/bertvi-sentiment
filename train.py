@@ -1,6 +1,7 @@
 import os
 import time
 import torch
+import argparse
 import pandas as pd
 import torch.nn as nn
 from yaml import load
@@ -31,6 +32,9 @@ configs = [
 ]
 
 config = os.path.join('config', configs[5])
+arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
+arg.add_argument('-f', '--config', default=configs[5])
+args = arg.parse_args()
 
 
 def config_parsing(arg):
@@ -41,7 +45,7 @@ def config_parsing(arg):
 
 if __name__ == '__main__':
     # config parsing
-    opts = config_parsing(config)
+    opts = config_parsing(args.config)
     logger.info(opts)
 
     # initialize model
@@ -180,7 +184,7 @@ if __name__ == '__main__':
 
     fig.legend([l1, l2, l3, l4],
                labels,
-               bbox_to_anchor=(0.5, 0.2))
+               bbox_to_anchor=(0.45, 0.35))
 
     fig.tight_layout()
     plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.png'),
