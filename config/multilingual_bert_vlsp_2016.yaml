@@ -1,8 +1,8 @@
-device: cpu
+device: cuda
 dataset: vlsp2016
 encoder: bert
 epochs: 5
-batch_size: 2
+batch_size: 1
 feature_shape: 768
 num_classes: 2
 max_length: 512

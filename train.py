@@ -2,6 +2,7 @@ import os
 import time
 import torch
 import argparse
+import numpy as np
 import pandas as pd
 import torch.nn as nn
 from yaml import load
@@ -31,9 +32,8 @@ configs = [
     'multilingual_bert_vlsp_2016.yaml'
 ]
 
-config = os.path.join('config', configs[5])
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=configs[5])
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[5]))
 args = arg.parse_args()
 
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         dataset = VLSP2016(file='SA-2016.train',
                            max_length=opts.max_length,
                            tokenizer_type=opts.tokenizer_type)
-        test_dataset = VLSP2016(file='SA-2016.test',
+        test_dataset = VLSP2016(file='SA-2016.train',
                                 max_length=opts.max_length,
                                 tokenizer_type=opts.tokenizer_type)
     elif opts.dataset == 'uit-vsfc':
@@ -89,8 +89,10 @@ if __name__ == '__main__':
         logger.info(f'Create directory {experiment_path}')
 
     # load data
-    data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
-    test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
+    data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers,
+                             drop_last=True)
+    test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers,
+                                  drop_last=True)
 
     # initialize criterion and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -114,12 +116,19 @@ if __name__ == '__main__':
 
             optimizer.zero_grad()
             preds = net(sents)
-
-            _, predicted = torch.max(preds.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
             loss = criterion(preds, labels)
+
+            if opts.device == 'cuda':
+                preds = preds.cpu().detach().numpy()
+                labels = labels.cpu().detach().numpy()
+            else:
+                preds = preds.detach().numpy()
+                labels = labels.detach().numpy()
+
+            predicted = np.argmax(preds, 1)
+            total += labels.shape[0]
+            correct += np.sum((predicted == labels))
+
             loss.backward()
             optimizer.step()
 
@@ -144,9 +153,17 @@ if __name__ == '__main__':
                 preds = net(sents)
                 loss = criterion(preds, labels)
 
-                _, predicted = torch.max(preds.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+                if opts.device == 'cuda':
+                    preds = preds.cpu().detach().numpy()
+                    labels = labels.cpu().detach().numpy()
+                else:
+                    preds = preds.detach().numpy()
+                    labels = labels.detach().numpy()
+
+                predicted = np.argmax(preds, 1)
+                total += labels.shape[0]
+                correct += np.sum((predicted == labels))
+
                 val_loss += loss.item()
 
             val_loss = float(val_loss / total)
