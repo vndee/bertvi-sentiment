@@ -39,9 +39,11 @@ def config_parsing(arg):
 
 
 if __name__ == '__main__':
+    # config parsing
     opts = config_parsing(config)
     logger.info(opts)
 
+    # initialize model
     if opts.encoder == 'phobert':
         enc = PhoBertEncoder()
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
@@ -75,9 +77,11 @@ if __name__ == '__main__':
                               pivot=opts.pivot,
                               train=False)
 
+    # load data
     data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
     test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
 
+    # initialize criterion and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(),
                                 lr=opts.learning_rate,
@@ -87,7 +91,9 @@ if __name__ == '__main__':
     logger.info('Start training...')
     best_checkpoint = 0.0
 
+    # train
     for epoch in range(opts.epochs):
+        epoch = epoch + 1
         correct, total = 0, 0
         total_loss = 0.0
         for idx, item in enumerate(data_loader):
@@ -138,6 +144,18 @@ if __name__ == '__main__':
                 logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
                 torch.save(net, os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
 
+    # save history to csv
     df.to_csv(os.path.join(experiment_path, 'history.csv'))
-    df.plot()
+
+    # plot figure
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('epoch(s)')
+    ax1.set_ylabel('loss')
+    ax1.plot(df['epoch'].astype(int).tolist(), df['train_loss'].tolist(), 'b')
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('accuracy')
+    ax2.plot(df['epoch'].astype(int).tolist(), df['train_acc'].tolist(), 'r')
+
+    fig.tight_layout()
     plt.show()
