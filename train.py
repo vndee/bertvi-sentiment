@@ -1,4 +1,5 @@
 import os
+import time
 import torch
 import pandas as pd
 import torch.nn as nn
@@ -77,6 +78,12 @@ if __name__ == '__main__':
                               pivot=opts.pivot,
                               train=False)
 
+    experiment_path = os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}')
+    if not os.path.exists(experiment_path):
+        os.makedirs(experiment_path)
+        os.makedirs(os.path.join(experiment_path, 'checkpoints'))
+        logger.info(f'Create directory {experiment_path}')
+
     # load data
     data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
     test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers, drop_last=True)
@@ -87,12 +94,13 @@ if __name__ == '__main__':
                                 lr=opts.learning_rate,
                                 momentum=opts.momentum)
 
-    df = pd.DataFrame(columns=['epoch', 'train_loss', 'train_acc', 'val_loss', 'val_acc'])
+    df = pd.DataFrame(columns=['epoch', 'train_loss', 'train_acc', 'val_loss', 'val_acc', 'train_time', 'val_time'])
     logger.info('Start training...')
     best_checkpoint = 0.0
 
     # train
     for epoch in range(opts.epochs):
+        t0 = time.time()
         epoch = epoch + 1
         correct, total = 0, 0
         total_loss = 0.0
@@ -117,7 +125,10 @@ if __name__ == '__main__':
         train_loss = float(total_loss / total)
         train_acc = float(correct / total)
 
-        logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | Training loss: {train_loss}')
+        t1 = time.time()
+        logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
+                    f'Training loss: {train_loss} | '
+                    f'Training time: {t1 - t0}s')
 
         with torch.no_grad():
             correct, total = 0, 0
@@ -137,8 +148,11 @@ if __name__ == '__main__':
             val_loss = float(val_loss / total)
             val_acc = float(correct / total)
 
-            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {val_acc} | Training loss: {train_loss}')
-            df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc]
+            t2 = time.time()
+            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Evaluation accuracy: {val_acc} | '
+                        f'Training loss: {train_loss} | '
+                        f'Evaluation time: {t2 - t1}s')
+            df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc, t1 - t0, t2 - t1]
 
             if val_acc > best_checkpoint:
                 logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
@@ -151,11 +165,23 @@ if __name__ == '__main__':
     fig, ax1 = plt.subplots()
     ax1.set_xlabel('epoch(s)')
     ax1.set_ylabel('loss')
-    ax1.plot(df['epoch'].astype(int).tolist(), df['train_loss'].tolist(), 'b')
+    ax1.plot(df['epoch'].astype(int).tolist(), df['train_loss'].tolist(), 'b', label='Train loss')
+    ax1.plot(df['epoch'].astype(int).tolist(), df['val_loss'].tolist(), 'g', label='Validation loss')
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('accuracy')
-    ax2.plot(df['epoch'].astype(int).tolist(), df['train_acc'].tolist(), 'r')
+    ax2.plot(df['epoch'].astype(int).tolist(), df['train_acc'].tolist(), 'r', label='Train accuracy')
+    ax2.plot(df['epoch'].astype(int).tolist(), df['val_acc'].tolist(), 'y', label='Validation accuracy')
+
+    handles = [ax.get_legend_handles_labels() for ax in fig.axes]
+    print(handles)
+    labels = ['1', '2', '3', '4']
+    fig.legend(handles, labels, loc='upper center')
 
     fig.tight_layout()
+    plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.png'),
+                dpi=500)
+    plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.pdf'),
+                dpi=500,
+                format='pdf')
     plt.show()
