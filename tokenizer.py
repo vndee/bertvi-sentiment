@@ -35,7 +35,6 @@ class PhoBertTokenizer:
         self.max_length = max_length
 
     def __call__(self, x):
-        print(x)
         line = self.rdr_segmenter.tokenize(x)
         line = ' '.join([' '.join(sent) for sent in line])
         subwords = '<s> ' + self.bpe.encode(line) + ' </s>'

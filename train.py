@@ -57,11 +57,15 @@ if __name__ == '__main__':
         enc = BertEncoder()
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
 
+    if opts.__getattribute__('pretrained'):
+        net = torch.load(opts.pretrained)
+        logger.info(f'Loaded pretrained model {opts.encoder} for {opts.encoder}')
+
     if opts.dataset == 'vlsp2016':
         dataset = VLSP2016(file='SA-2016.train',
                            max_length=opts.max_length,
                            tokenizer_type=opts.tokenizer_type)
-        test_dataset = VLSP2016(file='SA-2016.train',
+        test_dataset = VLSP2016(file='SA-2016.test',
                                 max_length=opts.max_length,
                                 tokenizer_type=opts.tokenizer_type)
     elif opts.dataset == 'uit-vsfc':
