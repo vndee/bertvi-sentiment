@@ -57,17 +57,17 @@ if __name__ == '__main__':
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
 
     if opts.dataset == 'vlsp2016':
-        dataset = VLSP2016(file='SA-2016.dev',
+        dataset = VLSP2016(file='SA-2016.train',
                            max_length=opts.max_length,
                            tokenizer_type=opts.tokenizer_type)
-        test_dataset = VLSP2016(file='SA-2016.dev',
+        test_dataset = VLSP2016(file='SA-2016.test',
                                 max_length=opts.max_length,
                                 tokenizer_type=opts.tokenizer_type)
     elif opts.dataset == 'uit-vsfc':
-        dataset = UITVSFC(file='dev',
+        dataset = UITVSFC(file='train',
                           max_length=opts.max_length,
                           tokenizer_type=opts.tokenizer_type)
-        test_dataset = UITVSFC(file='dev',
+        test_dataset = UITVSFC(file='test',
                                max_length=opts.max_length,
                                tokenizer_type=opts.tokenzier_type)
     else:
