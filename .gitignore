@@ -1,6 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
-outputs/checkpoints
+outputs/
 data/
 pretrained/
 vncorenlp/
