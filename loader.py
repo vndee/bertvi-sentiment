@@ -110,7 +110,7 @@ class UITVSFC(Dataset):
             self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
 
         logger.info('Loaded UIT-VSFC')
-        logger.info(f'There are {len(self.sents)} in {file} dataset.')
+        logger.info(f'There are {len(self.sents)} samples in {file} dataset.')
 
     def __getitem__(self, item):
         return self.tokenizer(self.sents[item].strip()), int(self.sentiments[item])

@@ -15,6 +15,7 @@ from model import SentimentAnalysisModel
 from phobert import PhoBertEncoder
 from bert import BertEncoder
 from torch.utils.data import DataLoader
+from sklearn.metrics import f1_score
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -34,7 +35,7 @@ configs = [
 ]
 
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=os.path.join('config', configs[0]))
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[2]))
 args = arg.parse_args()
 
 
@@ -76,12 +77,12 @@ if __name__ == '__main__':
                                max_length=opts.max_length,
                                tokenizer_type=opts.tokenizer_type)
     else:
-        dataset = AIVIVN(file='train.crash',
+        dataset = AIVIVN(file='dev.crash',
                          max_length=opts.max_length,
                          tokenizer_type=opts.tokenizer_type,
                          pivot=opts.pivot,
                          train=True)
-        test_dataset = AIVIVN(file='train.crash',
+        test_dataset = AIVIVN(file='dev.crash',
                               max_length=opts.max_length,
                               tokenizer_type=opts.tokenizer_type,
                               pivot=opts.pivot,
@@ -115,6 +116,9 @@ if __name__ == '__main__':
         epoch = epoch + 1
         correct, total = 0, 0
         total_loss = 0.0
+        train_preds = None
+        train_targets = None
+
         # for idx, item in enumerate(tqdm(data_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
         for idx, item in enumerate(data_loader):
             sents, labels = item[0].to(opts.device), \
@@ -140,6 +144,11 @@ if __name__ == '__main__':
             total += labels.shape[0]
             correct += np.sum((predicted == labels))
 
+            train_preds = np.atleast_1d(predicted) if train_preds is None else \
+                np.concatenate([train_preds, np.atleast_1d(predicted)])
+            train_targets = np.atleast_1d(labels) if train_targets is None else \
+                np.concatenate([train_targets, np.atleast_1d(labels)])
+
             loss.backward()
             optimizer.step()
 
@@ -149,14 +158,23 @@ if __name__ == '__main__':
         train_loss = float(total_loss / total)
         train_acc = float(correct / total)
 
+        train_f1 = f1_score(train_preds, train_targets)
+        if train_f1 == 0.0:
+            logger.info(train_preds)
+            logger.info(train_targets)
+
         t1 = time.time()
         logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
                     f'Training loss: {train_loss} | '
+                    f'Training f1_score: {train_f1} |'
                     f'Training time: {t1 - t0}s')
 
         with torch.no_grad():
             correct, total = 0, 0
             val_loss = 0.0
+            val_preds = None
+            val_targets = None
+
             for idx, item in enumerate(tqdm(test_data_loader, desc=f'Validation EPOCH: {epoch}/{opts.epochs}')):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
@@ -180,15 +198,27 @@ if __name__ == '__main__':
                 total += labels.shape[0]
                 correct += np.sum((predicted == labels))
 
+                val_preds = np.atleast_1d(predicted) if val_preds is None else \
+                    np.concatenate([val_preds, np.atleast_1d(predicted)])
+                val_targets = np.atleast_1d(labels) if val_targets is None else \
+                    np.concatenate([val_targets, np.atleast_1d(labels)])
+
                 val_loss += loss.item()
 
             val_loss = float(val_loss / total)
             val_acc = float(correct / total)
 
+            val_f1 = f1_score(val_preds, val_targets)
+            if val_f1 == 0.0:
+                logger.info(val_preds)
+                logger.info(val_targets)
+
             t2 = time.time()
             logger.info(f'EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
                         f'Validation loss: {train_loss} | '
+                        f'Validation f1_score: {val_f1} |'
                         f'Validation time: {t2 - t1}s')
+
             df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc, t1 - t0, t2 - t1]
 
             if val_acc > best_checkpoint:
