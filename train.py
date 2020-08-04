@@ -34,7 +34,7 @@ configs = [
 ]
 
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=os.path.join('config', configs[0]))
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[1]))
 args = arg.parse_args()
 
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                           tokenizer_type=opts.tokenizer_type)
         test_dataset = UITVSFC(file='test',
                                max_length=opts.max_length,
-                               tokenizer_type=opts.tokenzier_type)
+                               tokenizer_type=opts.tokenizer_type)
     else:
         dataset = AIVIVN(file='train.crash',
                          max_length=opts.max_length,
