@@ -89,6 +89,8 @@ class AIVIVN(Dataset):
         if self.eval is True:
             sent = sample[8:-1]
             id = sample.split('\n')[0].strip()
+            if item != 0:
+                id = 'test_' + id
             return id, self.tokenizer(sent)
 
         label = int(sample[-1:])

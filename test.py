@@ -36,7 +36,10 @@ if __name__ == '__main__':
 
     df = pd.DataFrame(columns=['id', 'label'])
 
-    for id, sents in tqdm(dataset):
+    for idx, (id, sents) in enumerate(tqdm(dataset)):
+        if idx > 10:
+            break
+
         sents = sents.unsqueeze(0)
 
         with torch.no_grad():
@@ -46,11 +49,11 @@ if __name__ == '__main__':
                 if args.device == 'cuda':
                     preds = preds.detach().cpu().numpy()
                 preds = np.argmax(preds, 1)[0]
-                df.append([id, preds])
+                df.loc[len(df)] = [id, preds]
             except Exception as ex:
                 logger.info(sents)
                 logger.exception(ex)
 
     print(df.head())
-    df.to_csv(os.path.join(experiment_path, 'submission.csv'))
+    df.to_csv(os.path.join(experiment_path, 'submission.csv'), index=False, columns=['id', 'label'])
     logger.info('Test completed.')

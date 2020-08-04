@@ -18,9 +18,9 @@ class SentimentAnalysisModel(torch.nn.Module):
     def __call__(self, x, attention_mask=None):
         x = self.encoder(x, attention_mask, output_hidden_states=True, output_attentions=True)
         x = torch.cat((x[2][-1][:, 0, ...],
-                   x[2][-2][:, 0, ...],
-                   x[2][-3][:, 0, ...],
-                   x[2][-4][:, 0, ...]), -1)
+                       x[2][-2][:, 0, ...],
+                       x[2][-3][:, 0, ...],
+                       x[2][-4][:, 0, ...]), -1)
         x = self.linear(x)
         # x = self.linear_1(x[1])
         # x = torch.nn.functional.relu(x)
