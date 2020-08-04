@@ -8,7 +8,7 @@ vncorenlp/
 __pycache__/
 *.py[cod]
 *$py.class
-
+refs/
 # C extensions
 *.so
 
