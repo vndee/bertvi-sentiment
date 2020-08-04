@@ -8,7 +8,6 @@ from fairseq.data.encoders.fastbpe import fastBPE
 
 def padding(x, max_length):
     cls_id, eos_id, pad_id = 0, 0, 1
-
     temp = torch.zeros(max_length, dtype=torch.long)
     if x.shape[0] > max_length:
         x = x[: max_length]

@@ -38,7 +38,7 @@ configs = [
 ]
 
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=os.path.join('config', configs[0]))
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[2]))
 args = arg.parse_args()
 
 

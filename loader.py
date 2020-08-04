@@ -52,19 +52,23 @@ class AIVIVN(Dataset):
     def __init__(self,
                  file='train.crash',
                  path=os.path.join('data', 'AIVIVN'),
-                 max_length=512,
+                 max_length=256,
                  tokenizer_type=BERTvi[0],
                  pivot=0.8,
-                 train=True):
+                 train=True,
+                 eval=False):
         super(AIVIVN, self).__init__()
         with open(os.path.join(path, file), mode='r', encoding='utf-8-sig') as stream:
             self.train = stream.read()
 
-        self.train = self.train.split('\n\ntrain_')
-        if train is True:
-            self.train = self.train[: int(len(self.train) * pivot)]
+        if eval is False:
+            self.train = self.train.split('\n\ntrain_')
+            if train is True:
+                self.train = self.train[: int(len(self.train) * pivot)]
+            else:
+                self.train = self.train[int(len(self.train) * pivot):]
         else:
-            self.train = self.train[int(len(self.train) * pivot):]
+            self.train = self.train.split('\n\ntest_')
 
         self.max_length = max_length
 
@@ -74,12 +78,19 @@ class AIVIVN(Dataset):
         else:
             self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
 
+        self.eval = eval
+
         logger.info('Loaded AIVIVN')
         logger.info(f'There are {len(self.train)} samples in {file} dataset')
 
     def __getitem__(self, item):
         sample = self.train[item].strip()
         sent = sample[8:-3].strip()
+        if self.eval is True:
+            sent = sample[8:-1]
+            id = sample.split('\n')[0].strip()
+            return id, self.tokenizer(sent)
+
         label = int(sample[-1:])
         return self.tokenizer(sent), label
 
