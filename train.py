@@ -115,7 +115,7 @@ if __name__ == '__main__':
         epoch = epoch + 1
         correct, total = 0, 0
         total_loss = 0.0
-        for idx, item in enumerate(data_loader):
+        for idx, item in enumerate(tqdm(data_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
             sents, labels = item[0].to(opts.device), \
                             item[1].to(opts.device)
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
             optimizer.step()
 
             total_loss = total_loss + loss.item()
-            logger.info(f'[{idx + 1}/{len(data_loader)}] Training loss: {loss.item()}')
+            # logger.info(f'[{idx + 1}/{len(data_loader)}] Training loss: {loss.item()}')
 
         train_loss = float(total_loss / total)
         train_acc = float(correct / total)
@@ -156,7 +156,7 @@ if __name__ == '__main__':
         with torch.no_grad():
             correct, total = 0, 0
             val_loss = 0.0
-            for idx, item in enumerate(tqdm(test_data_loader)):
+            for idx, item in enumerate(tqdm(test_data_loader, desc=f'Validation EPOCH: {epoch}/{opts.epochs}')):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
 
