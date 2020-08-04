@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
             optimizer.zero_grad()
             try:
-                preds = net(sents, (sents < 0).to(opts.device))
+                preds = net(sents, (sents > 0).to(opts.device))
             except Exception as ex:
                 logger.exception(ex)
                 continue
@@ -162,7 +162,7 @@ if __name__ == '__main__':
                                 item[1].to(opts.device)
 
                 try:
-                    preds = net(sents)
+                    preds = net(sents, (sents > 0).to(opts.device))
                 except Exception as ex:
                     logger.exception(ex)
                     continue
