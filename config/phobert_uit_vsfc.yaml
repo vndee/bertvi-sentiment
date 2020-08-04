@@ -4,7 +4,7 @@ encoder: phobert
 epochs: 10
 batch_size: 2
 feature_shape: 768
-num_classes: 2
+num_classes: 3
 max_length: 512
 tokenizer_type: phobert
 num_workers: 4
