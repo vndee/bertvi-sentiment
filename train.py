@@ -34,7 +34,7 @@ configs = [
 ]
 
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=os.path.join('config', configs[1]))
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[0]))
 args = arg.parse_args()
 
 
@@ -115,13 +115,14 @@ if __name__ == '__main__':
         epoch = epoch + 1
         correct, total = 0, 0
         total_loss = 0.0
-        for idx, item in enumerate(tqdm(data_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
+        # for idx, item in enumerate(tqdm(data_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
+        for idx, item in enumerate(data_loader):
             sents, labels = item[0].to(opts.device), \
                             item[1].to(opts.device)
 
             optimizer.zero_grad()
             try:
-                preds = net(sents)
+                preds = net(sents, (sents < 0).to(opts.device))
             except Exception as ex:
                 logger.exception(ex)
                 continue
@@ -143,7 +144,7 @@ if __name__ == '__main__':
             optimizer.step()
 
             total_loss = total_loss + loss.item()
-            # logger.info(f'[{idx + 1}/{len(data_loader)}] Training loss: {loss.item()}')
+            logger.info(f'[{idx + 1}/{len(data_loader)}] Training loss: {loss.item()}')
 
         train_loss = float(total_loss / total)
         train_acc = float(correct / total)

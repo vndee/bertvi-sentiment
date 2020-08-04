@@ -10,5 +10,5 @@ class BertEncoder(torch.nn.Module):
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_shortcut)
         self.bert = BertModel.from_pretrained(pretrained_shortcut)
 
-    def __call__(self, x):
-        return self.bert(x)
+    def __call__(self, x, attention_mask=None):
+        return self.bert(x, attention_mask=attention_mask)

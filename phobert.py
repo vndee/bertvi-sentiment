@@ -18,8 +18,8 @@ class PhoBertEncoder(torch.nn.Module):
             config=self.config
         )
 
-    def __call__(self, all_input_ids):
-        features = self.phobert(all_input_ids)
+    def __call__(self, all_input_ids, attention_mask=None):
+        features = self.phobert(all_input_ids, attention_mask=attention_mask)
         return features
 
 
