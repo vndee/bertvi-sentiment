@@ -18,6 +18,8 @@ from bert import BertEncoder
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except Exception as ex:
