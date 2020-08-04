@@ -15,7 +15,7 @@ class PhoBertEncoder(torch.nn.Module):
 
         self.phobert = RobertaModel.from_pretrained(
             os.path.join(os.getcwd(), 'pretrained', 'PhoBERT_base_transformers', 'model.bin'),
-            config=self.config
+            config=self.config,
         )
 
     def __call__(self, all_input_ids, attention_mask=None, output_hidden_states=None, output_attentions=None):
@@ -24,5 +24,3 @@ class PhoBertEncoder(torch.nn.Module):
                                 output_hidden_states=output_hidden_states,
                                 output_attentions=output_attentions)
         return features
-
-
