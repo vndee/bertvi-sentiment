@@ -37,9 +37,6 @@ if __name__ == '__main__':
     df = pd.DataFrame(columns=['id', 'label'])
 
     for idx, (id, sents) in enumerate(tqdm(dataset)):
-        if idx > 10:
-            break
-
         sents = sents.unsqueeze(0)
 
         with torch.no_grad():

@@ -232,6 +232,7 @@ if __name__ == '__main__':
             df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc, neg_f1, t1 - t0, t2 - t1]
 
             if val_acc > best_checkpoint:
+                val_acc = best_checkpoint
                 logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
                 torch.save(net, os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
                 with open(os.path.join(experiment_path, 'checkpoints', 'best.json'), 'w+') as stream:
