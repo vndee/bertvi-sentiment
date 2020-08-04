@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import torch
 import argparse
 import numpy as np
@@ -233,9 +234,8 @@ if __name__ == '__main__':
             if val_acc > best_checkpoint:
                 logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
                 torch.save(net, os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
-
-            if epoch + 1 == opts.epochs:
-                print(report)
+                with open(os.path.join(experiment_path, 'checkpoints', 'best.json'), 'w+') as stream:
+                    json.dump(report, stream)
 
     # save history to csv
     df.to_csv(os.path.join(experiment_path, 'history.csv'))
