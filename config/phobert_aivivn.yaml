@@ -1,4 +1,4 @@
-device: cuda
+device: cpu
 dataset: aivivn
 encoder: phobert
 epochs: 10
@@ -13,4 +13,4 @@ learning_rate: 3e-5
 momentum: 0.9
 random_seed: 101
 accumulation_steps: 5
-pretrained: outputs/phobert_aivivn/checkpoints/checkpoint_best.vndee
+#pretrained: outputs/phobert_aivivn/checkpoints/checkpoint_best.vndee

@@ -65,7 +65,7 @@ if __name__ == '__main__':
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
 
     if hasattr(opts, 'pretrained'):
-        net = torch.load(opts.pretrained)
+        net = torch.load(opts.pretrained).to(opts.device)
         logger.info(f'Loaded pretrained model {opts.encoder} for {opts.encoder}')
 
     if opts.dataset == 'vlsp2016':
@@ -232,7 +232,7 @@ if __name__ == '__main__':
             df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc, neg_f1, t1 - t0, t2 - t1]
 
             if val_acc > best_checkpoint:
-                val_acc = best_checkpoint
+                best_checkpoint = val_acc
                 logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
                 torch.save(net, os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
                 with open(os.path.join(experiment_path, 'checkpoints', 'best.json'), 'w+') as stream:

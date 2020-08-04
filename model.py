@@ -13,14 +13,15 @@ class SentimentAnalysisModel(torch.nn.Module):
         self.linear_1 = nn.Linear(in_features=self.feature_shape, out_features=self.feature_shape//2)
         self.linear_2 = nn.Linear(in_features=self.feature_shape//2, out_features=self.num_classes)
         # self.soft_max = nn.Softmax(dim=1)
-        self.linear = nn.Linear(4 * feature_shape, self.num_classes)
+        self.linear = nn.Linear(5 * feature_shape, self.num_classes)
 
     def __call__(self, x, attention_mask=None):
         x = self.encoder(x, attention_mask, output_hidden_states=True, output_attentions=True)
         x = torch.cat((x[2][-1][:, 0, ...],
                        x[2][-2][:, 0, ...],
                        x[2][-3][:, 0, ...],
-                       x[2][-4][:, 0, ...]), -1)
+                       x[2][-4][:, 0, ...],
+                       x[1]), -1)
         x = self.linear(x)
         # x = self.linear_1(x[1])
         # x = torch.nn.functional.relu(x)
