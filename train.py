@@ -164,10 +164,6 @@ if __name__ == '__main__':
         t1 = time.time()
         train_acc = report['accuracy']
         neg_f1 = report['0']['f1-score']
-        logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
-                    f'Training loss: {train_loss} | '
-                    f'Negative F1: {neg_f1} |'
-                    f'Training time: {t1 - t0}s\n')
 
         with torch.no_grad():
             total = 0
@@ -214,6 +210,12 @@ if __name__ == '__main__':
             t2 = time.time()
             val_acc = report['accuracy']
             neg_f1 = report['0']['f1-score']
+
+            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
+                        f'Training loss: {train_loss} | '
+                        f'Negative F1: {neg_f1} |'
+                        f'Training time: {t1 - t0}s')
+
             logger.info(f'EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
                         f'Validation loss: {train_loss} | '
                         f'Negative F1: {neg_f1} |'

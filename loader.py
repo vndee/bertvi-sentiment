@@ -34,7 +34,7 @@ class VLSP2016(Dataset):
             self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
 
         logger.info('Loaded VLSP-2016')
-        logger.info(f'There are {len(self.df)} in {file} dataset.')
+        logger.info(f'There are {len(self.df)} samples in {file} dataset.')
 
     def __getitem__(self, item):
         text = self.df.iloc[item, 0].encode('utf-8')
@@ -75,7 +75,7 @@ class AIVIVN(Dataset):
             self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
 
         logger.info('Loaded AIVIVN')
-        logger.info(f'There are {len(self.train)} in {file} dataset')
+        logger.info(f'There are {len(self.train)} samples in {file} dataset')
 
     def __getitem__(self, item):
         sample = self.train[item].strip()
