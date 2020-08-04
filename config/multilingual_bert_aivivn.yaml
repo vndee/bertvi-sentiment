@@ -9,5 +9,7 @@ pivot: 0.8
 max_length: 512
 tokenizer_type: bert-base-multilingual-cased
 num_workers: 4
-learning_rate: 0.001
+learning_rate: 3e-5
 momentum: 0.9
+random_seed: 101
+accumulation_steps: 5
