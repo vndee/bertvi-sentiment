@@ -42,7 +42,7 @@ class VLSP2016(Dataset):
         text = text.decode('utf-8-sig').strip()
 
         tent = self.tokenizer(text)
-        return tent, 1 if label == 'NEG' else 0
+        return tent, 1 if label == 'NEU' else 2 if label == 'NEG' else 0
 
     def __len__(self):
         return len(self.df)
