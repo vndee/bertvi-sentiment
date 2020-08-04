@@ -7,6 +7,7 @@ import pandas as pd
 import torch.nn as nn
 from tqdm import tqdm
 from yaml import load
+from optimizer import set_seed, create_optimizer
 import matplotlib.pyplot as plt
 from loader import VLSP2016, UITVSFC, AIVIVN
 from logger import get_logger
@@ -15,7 +16,7 @@ from model import SentimentAnalysisModel
 from phobert import PhoBertEncoder
 from bert import BertEncoder
 from torch.utils.data import DataLoader
-from sklearn.metrics import f1_score, classification_report
+from sklearn.metrics import classification_report
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -47,10 +48,12 @@ def config_parsing(arg):
 if __name__ == '__main__':
     # config parsing
     opts = config_parsing(args.config)
+    set_seed(opts.random_seed)
     logger = get_logger(f'Experiment_{opts.encoder}_{opts.dataset}')
     logger.info(opts)
 
     # initialize model
+    net = None
     if opts.encoder == 'phobert':
         enc = PhoBertEncoder()
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
@@ -102,9 +105,7 @@ if __name__ == '__main__':
 
     # initialize criterion and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(),
-                                lr=opts.learning_rate,
-                                momentum=opts.momentum)
+    optimizer, linear_scheduler, constant_scheduler = create_optimizer(net, opts, len(dataset))
 
     df = pd.DataFrame(columns=['epoch', 'train_loss', 'train_acc', 'val_loss', 'val_acc', 'f1_neg', 'train_time', 'val_time'])
     logger.info('Start training...')
@@ -119,6 +120,7 @@ if __name__ == '__main__':
         train_preds = None
         train_targets = None
 
+        net.train()
         for idx, item in enumerate(tqdm(data_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
         # for idx, item in enumerate(data_loader):
             sents, labels = item[0].to(opts.device), \
@@ -149,7 +151,9 @@ if __name__ == '__main__':
                 np.concatenate([train_targets, np.atleast_1d(labels)])
 
             loss.backward()
-            optimizer.step()
+            if idx % opts.accumulation_steps == 0:
+                optimizer.step()
+                linear_scheduler.step()
 
             total_loss = total_loss + loss.item()
             # logger.info(f'[{idx + 1}/{len(data_loader)}] Training loss: {loss.item()}')
@@ -163,7 +167,7 @@ if __name__ == '__main__':
 
         t1 = time.time()
         train_acc = report['accuracy']
-        neg_f1 = report['0']['f1-score']
+        train_neg_f1 = report['0']['f1-score']
 
         with torch.no_grad():
             total = 0
@@ -171,6 +175,7 @@ if __name__ == '__main__':
             val_preds = None
             val_targets = None
 
+            net.eval()
             for idx, item in enumerate(tqdm(test_data_loader, desc=f'Validation EPOCH: {epoch}/{opts.epochs}')):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
@@ -213,12 +218,12 @@ if __name__ == '__main__':
 
             logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
                         f'Training loss: {train_loss} | '
-                        f'Negative F1: {neg_f1} |'
+                        f'Negative F1: {train_neg_f1} | '
                         f'Training time: {t1 - t0}s')
 
             logger.info(f'EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
                         f'Validation loss: {train_loss} | '
-                        f'Negative F1: {neg_f1} |'
+                        f'Negative F1: {neg_f1} | '
                         f'Validation time: {t2 - t1}s')
 
             df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc, neg_f1, t1 - t0, t2 - t1]
