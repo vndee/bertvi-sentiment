@@ -264,4 +264,5 @@ if __name__ == '__main__':
     plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.pdf'),
                 dpi=500,
                 format='pdf')
-    plt.show()
+
+    logger.info('Training completed')
