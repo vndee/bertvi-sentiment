@@ -125,7 +125,6 @@ if __name__ == '__main__':
 
         net.train()
         for idx, item in enumerate(tqdm(data_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
-        # for idx, item in enumerate(data_loader):
             sents, labels = item[0].to(opts.device), \
                             item[1].to(opts.device)
 
@@ -159,7 +158,6 @@ if __name__ == '__main__':
                 linear_scheduler.step()
 
             total_loss = total_loss + loss.item()
-            # logger.info(f'[{idx + 1}/{len(data_loader)}] Training loss: {loss.item()}')
 
         train_loss = float(total_loss / total)
 
@@ -244,7 +242,6 @@ if __name__ == '__main__':
     # plot figure
     labels = ['Train loss', 'Validation loss', 'Train accuracy', 'Validation accuracy']
     fig, ax1 = plt.subplots()
-    # plt.xticks(df['epoch'].astype(int).tolist())
 
     ax1.set_xlabel('epoch(s)')
     ax1.set_ylabel('loss')
