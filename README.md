@@ -9,7 +9,7 @@ Official repository for paper "Fine-tuning BERT-based Pre-Trained Language Model
   <p align="center">Fine-tuning pipeline for Vietnamese sentiment analysis.</p>
 </p>
 
-This project shows how BERT-based pre-trained language models improved performance of sentiment analysis in several
+This project shows how BERT-based pre-trained language models improves performance of sentiment analysis in several
 Vietnamese benchmarks.  
 
 ### Requirements
