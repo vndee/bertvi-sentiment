@@ -11,10 +11,33 @@ Official repository for paper "Fine-tuning BERT-based Pre-Trained Language Model
 - PyTorch
 - Transformers
 - Fairseq
+- VnCoreNLP
+- FastBPE
 
 To install all dependencies:
 
     pip install -r requirements.txt
+
+Download VnCoreNLP and word segmenter:
+
+    mkdir -p vncorenlp/models/wordsegmenter
+    wget https://raw.githubusercontent.com/vncorenlp/VnCoreNLP/master/VnCoreNLP-1.1.1.jar
+    wget https://raw.githubusercontent.com/vncorenlp/VnCoreNLP/master/models/wordsegmenter/vi-vocab
+    wget https://raw.githubusercontent.com/vncorenlp/VnCoreNLP/master/models/wordsegmenter/wordsegmenter.rdr
+    mv VnCoreNLP-1.1.1.jar vncorenlp/ 
+    mv vi-vocab vncorenlp/models/wordsegmenter/
+    mv wordsegmenter.rdr vncorenlp/models/wordsegmenter/
+    
+Download PhoBERT pretrained model:
+- PhoBERT-base:
+
+        wget https://public.vinai.io/PhoBERT_base_transformers.tar.gz
+        tar -xzvf PhoBERT_base_transformers.tar.gz
+
+- PhoBERT-large:
+
+        wget https://public.vinai.io/PhoBERT_large_transformers.tar.gz
+        tar -xzvf PhoBERT_large_transformers.tar.gz
     
 #### Training
 

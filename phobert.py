@@ -3,6 +3,7 @@ import json
 import torch
 
 from transformers import RobertaModel, RobertaConfig
+from transformers import RobertaForSequenceClassification
 
 
 class PhoBertEncoder(torch.nn.Module):
