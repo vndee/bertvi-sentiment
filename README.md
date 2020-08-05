@@ -33,3 +33,9 @@ Define your own config variables in config file.
 | random_seed  | Random seed.  | `101`  |
 | accumulation_steps  | Optimizer accumulation step.  | `5`  |
 | pretrained (Optional) | Pretrained model path. | `None` | 
+
+Training your model:
+
+    python train.py -f config/phobert_vlsp_2016.yaml
+    
+All outputs will be placed at `outputs` directory.
