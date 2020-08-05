@@ -68,7 +68,7 @@ Define your own configuration variables in config file.
 | accumulation_steps  | Optimizer accumulation step.  | `5`  |
 | pretrained (Optional) | Pretrained model path. | `None` | 
 
-Training your model:
+Train your model:
 
     python train.py -f config/phobert_vlsp_2016.yaml
     
