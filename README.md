@@ -34,7 +34,7 @@ Download VnCoreNLP and word segmenter:
     mv vi-vocab vncorenlp/models/wordsegmenter/
     mv wordsegmenter.rdr vncorenlp/models/wordsegmenter/
     
-Download PhoBERT pretrained model:
+Download PhoBERT pretrained models and puts it into `pretrained` directory:
 - PhoBERT-base:
 
         wget https://public.vinai.io/PhoBERT_base_transformers.tar.gz
