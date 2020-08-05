@@ -1,4 +1,5 @@
 import os
+import re
 import torch
 from transformers import BertTokenizer
 from vncorenlp import VnCoreNLP
@@ -37,7 +38,8 @@ class PhoBertTokenizer:
 
     def __call__(self, x):
         line = self.rdr_segmenter.tokenize(x)
-        line = ' '.join([' '.join(sent) for sent in line])
+        line = '</s>'.join([' '.join(sent) for sent in line])
+        line = re.sub(r' _ ', '_', line)
         subwords = '<s> ' + self.bpe.encode(line) + ' </s>'
         input_ids = self.vocab.encode_line(subwords, append_eos=False, add_if_not_exist=False)
         return padding(input_ids, self.max_length)

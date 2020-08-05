@@ -38,7 +38,7 @@ configs = [
 ]
 
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=os.path.join('config', configs[2]))
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[0]))
 args = arg.parse_args()
 
 
@@ -69,10 +69,10 @@ if __name__ == '__main__':
         logger.info(f'Loaded pretrained model {opts.encoder} for {opts.encoder}')
 
     if opts.dataset == 'vlsp2016':
-        dataset = VLSP2016(file='SA-2016.train',
+        dataset = VLSP2016(file='SA-2016.dev',
                            max_length=opts.max_length,
                            tokenizer_type=opts.tokenizer_type)
-        test_dataset = VLSP2016(file='SA-2016.test',
+        test_dataset = VLSP2016(file='SA-2016.dev',
                                 max_length=opts.max_length,
                                 tokenizer_type=opts.tokenizer_type)
     elif opts.dataset == 'uit-vsfc':
@@ -102,9 +102,9 @@ if __name__ == '__main__':
 
     # load data
     data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers,
-                             drop_last=True)
+                             drop_last=False)
     test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers,
-                                  drop_last=True)
+                                  drop_last=False)
 
     # initialize criterion and optimizer
     criterion = nn.CrossEntropyLoss()
