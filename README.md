@@ -47,7 +47,7 @@ Download PhoBERT pretrained models and puts it into `pretrained` directory:
     
 ### Training
 
-Define your own config variables in config file. 
+Define your own configuration variables in config file. 
 
 | Variable  | Description  | Default  |
 |---|---|---|
