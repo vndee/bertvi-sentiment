@@ -11,6 +11,7 @@ Official repository for paper "Fine-tuning BERT-based Pre-Trained Language Model
 
 This project shows how BERT-base pre-trained language models improved performance of sentiment analysis in several
 Vietnamese benchmarks.  
+
 ### Requirements
 
 - PyTorch
@@ -75,4 +76,5 @@ All outputs will be placed at `outputs` directory.
 
 ### References
 
-- [1] Nguyen, Dat & Nguyen, Anh. (2020). PhoBERT: Pre-trained language models for Vietnamese. 
+- [1] Nguyen, Dat & Nguyen, Anh. (2020). PhoBERT: Pre-trained language models for Vietnamese. Arxiv preprint: https://arxiv.org/abs/2003.00744
+- [2] PhoBERT Sentiment Classification. https://github.com/suicao/PhoBert-Sentiment-Classification
