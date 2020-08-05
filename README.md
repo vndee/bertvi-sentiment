@@ -1,12 +1,9 @@
 ### BERTvi-sentiment
 Official repository for paper "Fine-tuning BERT-based Pre-Trained Language Models for Vietnamese Sentiment Analysis".
 
-
 <p align="center">
-  <img src="">
-  <p align="center">Part of JeeDoc project: JeeDoc OCR
-  </br><a href="https://github.com/userkimcs">Kim Nguyen</a>, <a href="https://github.com/dat821168">Dat Ngo</a>, <a href="https://github.com/vndee">Duy Huynh</a>
-  </br>DPS-AI, Computer Co., Ltd. Dai Phat</p>
+  <img src="https://raw.githubusercontent.com/vndee/bertvi-sentiment/master/imgs/nics2020.svg">
+  <p align="center">Fine-tuning pipeline for Vietnamese sentiment analysis.</p>
 </p>
 
 #### Requirements
