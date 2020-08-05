@@ -49,7 +49,7 @@ Download PhoBERT pretrained model:
 
 Define your own config variables in config file. 
 
-| Varialble  | Description  | Default  |
+| Variable  | Description  | Default  |
 |---|---|---|
 | device  | Training device: `cpu` or `cuda`.  | `cuda`  |
 | dataset  | Which dataset will be used for training phrase: `vlsp2016`, `aivivn`, `uit-vsfc`.  | `vlsp2016`  |
