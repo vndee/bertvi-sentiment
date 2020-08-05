@@ -70,3 +70,7 @@ Training your model:
     python train.py -f config/phobert_vlsp_2016.yaml
     
 All outputs will be placed at `outputs` directory.
+
+### References
+
+- [1] Nguyen, Dat & Nguyen, Anh. (2020). PhoBERT: Pre-trained language models for Vietnamese. 
