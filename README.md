@@ -1,12 +1,15 @@
-### BERTvi-sentiment
+<p align="center"> 
+<h2>BERTvi-sentiment</h2>
+
 Official repository for paper "Fine-tuning BERT-based Pre-Trained Language Models for Vietnamese Sentiment Analysis".
+</p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/vndee/bertvi-sentiment/master/imgs/_nics2020.svg">
   <p align="center">Fine-tuning pipeline for Vietnamese sentiment analysis.</p>
 </p>
 
-#### Requirements
+### Requirements
 
 - PyTorch
 - Transformers
@@ -39,7 +42,7 @@ Download PhoBERT pretrained model:
         wget https://public.vinai.io/PhoBERT_large_transformers.tar.gz
         tar -xzvf PhoBERT_large_transformers.tar.gz
     
-#### Training
+### Training
 
 Define your own config variables in config file. 
 
