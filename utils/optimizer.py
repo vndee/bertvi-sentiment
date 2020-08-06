@@ -20,6 +20,7 @@ def create_optimizer(net, opts, len_data):
 
     optimizer = AdamW(optimizer_grouped_parameters,
                       lr=float(opts.learning_rate),
+                      betas=(0.9, 0.99),
                       correct_bias=True)
 
     number_of_optimization_steps = int(opts.epochs * len_data / opts.batch_size / opts.accumulation_steps)

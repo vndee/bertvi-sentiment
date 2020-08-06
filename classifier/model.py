@@ -22,6 +22,7 @@ class SentimentAnalysisModel(torch.nn.Module):
                        x[2][-3][:, 0, ...],
                        x[2][-4][:, 0, ...],
                        x[1]), -1)
+        x = torch.nn.functional.dropout(x, 0.2)
         x = self.linear(x)
         # x = self.linear_1(x[1])
         # x = torch.nn.functional.relu(x)
