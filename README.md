@@ -83,4 +83,5 @@ All outputs will be placed at `outputs` directory.
 - [5] Merchant, A., Rahimtoroghi, E., Pavlick, E., & Tenney, I. (2020). What Happens To BERT Embeddings During Fine-tuning? ArXiv, abs/2004.14448.
 - [6] Semnani, S.J. (2019). BERT-A : Fine-tuning BERT with Adapters and Data Augmentation.
 - [7] Hao, Y., Dong, L., Wei, F., & Xu, K. (2019). Visualizing and Understanding the Effectiveness of BERT. ArXiv, abs/1908.05620.
-- [3] PhoBERT Sentiment Classification. https://github.com/suicao/PhoBert-Sentiment-Classification
+- [8] Zhang, T., Wu, F., Katiyar, A., Weinberger, K.Q., & Artzi, Y. (2020). Revisiting Few-sample BERT Fine-tuning. ArXiv, abs/2006.05987.
+- [9] PhoBERT Sentiment Classification. https://github.com/suicao/PhoBert-Sentiment-Classification
