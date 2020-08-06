@@ -1,6 +1,6 @@
 device: cpu
 dataset: vlsp2016
-encoder: phobert
+encoder: roberta_clf
 epochs: 10
 batch_size: 2
 feature_shape: 768

@@ -14,10 +14,13 @@ from utils.loader import VLSP2016, UITVSFC, AIVIVN
 from utils.logger import get_logger
 from collections import namedtuple
 from classifier.model import SentimentAnalysisModel
+from classifier.phobert_sequence_clf import PhoBertForSequenceClassification
 from models.phobert import PhoBertEncoder
 from models.bert import BertEncoder
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
+from transformers.optimization import AdamW
+from transformers import get_cosine_schedule_with_warmup
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -63,6 +66,9 @@ if __name__ == '__main__':
     elif opts.encoder == 'bert':
         enc = BertEncoder()
         net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
+    elif opts.encoder == 'roberta_clf':
+        net = PhoBertForSequenceClassification()
+        net = net.net.to(opts.device)
 
     if hasattr(opts, 'pretrained'):
         net = torch.load(opts.pretrained).to(opts.device)
@@ -107,8 +113,12 @@ if __name__ == '__main__':
                                   drop_last=False)
 
     # initialize criterion and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer, linear_scheduler, constant_scheduler = create_optimizer(net, opts, len(dataset))
+    if opts.encoder in ['phobert', 'bert']:
+        criterion = nn.CrossEntropyLoss()
+        optimizer, linear_scheduler, constant_scheduler = create_optimizer(net, opts, len(dataset))
+    else:
+        optimizer = AdamW(net.parameters())
+        lr_scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=opts.epochs)
 
     df = pd.DataFrame(columns=['epoch', 'train_loss', 'train_acc', 'val_loss', 'val_acc', 'f1_neg', 'train_time', 'val_time'])
     logger.info('Start training...')
@@ -129,13 +139,12 @@ if __name__ == '__main__':
                             item[1].to(opts.device)
 
             optimizer.zero_grad()
-            try:
-                preds = net(sents, (sents > 0).to(opts.device))
-            except Exception as ex:
-                logger.exception(ex)
-                continue
 
-            loss = criterion(preds, labels)
+            if opts.encoder in ['phobert', 'bert']:
+                preds = net(sents, (sents > 0).to(opts.device))
+                loss = criterion(preds, labels)
+            else:
+                loss, preds = net(sents, (sents > 0).to(opts.device), labels=labels)
 
             if opts.device == 'cuda':
                 preds = preds.detach().cpu().numpy()
@@ -143,6 +152,8 @@ if __name__ == '__main__':
             else:
                 preds = preds.detach().numpy()
                 labels = labels.detach().numpy()
+
+            logger.info(f'Preds: {preds}')
 
             predicted = np.argmax(preds, 1)
             total += labels.shape[0]
@@ -153,9 +164,8 @@ if __name__ == '__main__':
                 np.concatenate([train_targets, np.atleast_1d(labels)])
 
             loss.backward()
-            if idx % opts.accumulation_steps == 0:
-                optimizer.step()
-                linear_scheduler.step()
+            optimizer.step()
+            lr_scheduler.step()
 
             total_loss = total_loss + loss.item()
 
@@ -181,13 +191,11 @@ if __name__ == '__main__':
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
 
-                try:
+                if opts.encoder in ['phobert', 'bert']:
                     preds = net(sents, (sents > 0).to(opts.device))
-                except Exception as ex:
-                    logger.exception(ex)
-                    continue
-
-                loss = criterion(preds, labels)
+                    loss = criterion(preds, labels)
+                else:
+                    loss, preds = net(sents, (sents > 0).to(opts.device), labels=labels)
 
                 if opts.device == 'cuda':
                     preds = preds.detach().cpu().numpy()
