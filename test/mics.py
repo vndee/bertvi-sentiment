@@ -1,9 +1,9 @@
 import os
 
-with open(os.path.join('outputs', 'submission.csv'), 'r') as stream:
+with open(os.path.join('../outputs', 'submission.csv'), 'r') as stream:
     data = stream.read().split('\n')
 
-    file_writer = open(os.path.join('outputs', 'submiss.csv'), 'w+')
+    file_writer = open(os.path.join('../outputs', 'submiss.csv'), 'w+')
     for line in data:
         line = line.split(',')
         if line.__len__() < 3:

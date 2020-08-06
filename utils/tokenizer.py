@@ -18,7 +18,7 @@ def padding(x, max_length):
 
 
 class BPEConfig:
-    bpe_codes = os.path.join(os.getcwd(), 'pretrained', 'PhoBERT_base_transformers', 'bpe.codes')
+    bpe_codes = os.path.join(os.getcwd(), '../pretrained', 'PhoBERT_base_transformers', 'bpe.codes')
 
 
 class PhoBertTokenizer:
@@ -26,11 +26,11 @@ class PhoBertTokenizer:
         self.bpe = fastBPE(BPEConfig)
         self.vocab = Dictionary()
         self.vocab.add_from_file(os.path.join(os.getcwd(),
-                                              'pretrained',
+                                              '../pretrained',
                                               'PhoBERT_base_transformers',
                                               'dict.txt'))
         self.rdr_segmenter = VnCoreNLP(
-            os.path.join('vncorenlp', 'VnCoreNLP-1.1.1.jar'),
+            os.path.join('../vncorenlp', 'VnCoreNLP-1.1.1.jar'),
             annotators='wseg',
             max_heap_size='-Xmx500m'
         )

@@ -10,11 +10,11 @@ class PhoBertEncoder(torch.nn.Module):
     def __init__(self):
         super(PhoBertEncoder, self).__init__()
         self.config = RobertaConfig.from_pretrained(
-            os.path.join(os.getcwd(), 'pretrained', 'PhoBERT_base_transformers', 'config.json')
+            os.path.join(os.getcwd(), '../pretrained', 'PhoBERT_base_transformers', 'config.json')
         )
 
         self.phobert = RobertaModel.from_pretrained(
-            os.path.join(os.getcwd(), 'pretrained', 'PhoBERT_base_transformers', 'model.bin'),
+            os.path.join(os.getcwd(), '../pretrained', 'PhoBERT_base_transformers', 'models.bin'),
             config=self.config,
         )
 

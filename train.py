@@ -8,14 +8,14 @@ import pandas as pd
 import torch.nn as nn
 from tqdm import tqdm
 from yaml import load
-from optimizer import set_seed, create_optimizer
+from utils.optimizer import set_seed, create_optimizer
 import matplotlib.pyplot as plt
-from loader import VLSP2016, UITVSFC, AIVIVN
-from logger import get_logger
+from utils.loader import VLSP2016, UITVSFC, AIVIVN
+from utils.logger import get_logger
 from collections import namedtuple
-from model import SentimentAnalysisModel
-from phobert import PhoBertEncoder
-from bert import BertEncoder
+from models.model import SentimentAnalysisModel
+from models.phobert import PhoBertEncoder
+from models.bert import BertEncoder
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     logger = get_logger(f'Experiment_{opts.encoder}_{opts.dataset}')
     logger.info(opts)
 
-    # initialize model
+    # initialize models
     net = None
     if opts.encoder == 'phobert':
         enc = PhoBertEncoder()

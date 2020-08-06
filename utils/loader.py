@@ -1,12 +1,8 @@
 import os
-import torch
 import pandas as pd
-from logger import get_logger
-from vncorenlp import VnCoreNLP
-from fairseq.data import Dictionary
-from torch.utils.data import DataLoader, Dataset
-from tokenizer import PhoBertTokenizer, BertViTokenizer
-from fairseq.data.encoders.fastbpe import fastBPE
+from utils.logger import get_logger
+from torch.utils.data import Dataset
+from utils.tokenizer import PhoBertTokenizer, BertViTokenizer
 
 logger = get_logger('Data Loader')
 BERTvi = ['phobert', 'bert-base-multilingual-cased']
@@ -15,7 +11,7 @@ BERTvi = ['phobert', 'bert-base-multilingual-cased']
 class VLSP2016(Dataset):
     def __init__(self,
                  file='SA-2016.train',
-                 path=os.path.join('data', 'VLSP2016'),
+                 path=os.path.join('../data', 'VLSP2016'),
                  max_length=512,
                  tokenizer_type=BERTvi[0]):
         super(VLSP2016, self).__init__()
@@ -51,7 +47,7 @@ class VLSP2016(Dataset):
 class AIVIVN(Dataset):
     def __init__(self,
                  file='train.crash',
-                 path=os.path.join('data', 'AIVIVN'),
+                 path=os.path.join('../data', 'AIVIVN'),
                  max_length=256,
                  tokenizer_type=BERTvi[0],
                  pivot=0.8,
@@ -103,7 +99,7 @@ class AIVIVN(Dataset):
 class UITVSFC(Dataset):
     def __init__(self,
                  file='train',
-                 path=os.path.join('data', 'UIT-VSFC'),
+                 path=os.path.join('../data', 'UIT-VSFC'),
                  max_length=512,
                  tokenizer_type=BERTvi[0]):
         super(UITVSFC, self).__init__()
