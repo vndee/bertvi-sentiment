@@ -118,7 +118,8 @@ if __name__ == '__main__':
         optimizer, linear_scheduler, constant_scheduler = create_optimizer(net, opts, len(dataset))
     else:
         optimizer = AdamW(net.parameters())
-        lr_scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=opts.epochs)
+        lr_scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=opts.epochs
+                                                       * len(dataset) / opts.batch_size)
 
     df = pd.DataFrame(columns=['epoch', 'train_loss', 'train_acc', 'val_loss', 'val_acc', 'f1_neg', 'train_time', 'val_time'])
     logger.info('Start training...')
