@@ -5,7 +5,7 @@ Official repository for paper "Fine-tuning BERT-based Pre-Trained Language Model
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/vndee/bertvi-sentiment/master/imgs/_nics2020.svg">
+  <img src="https://raw.githubusercontent.com/vndee/bertvi-sentiment/master/imgs/nics2020.gif">
   <p align="center">Fine-tuning pipeline for Vietnamese sentiment analysis.</p>
 </p>
 

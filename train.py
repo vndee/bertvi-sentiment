@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from utils.loader import VLSP2016, UITVSFC, AIVIVN
 from utils.logger import get_logger
 from collections import namedtuple
-from models.model import SentimentAnalysisModel
+from classifier.model import SentimentAnalysisModel
 from models.phobert import PhoBertEncoder
 from models.bert import BertEncoder
 from torch.utils.data import DataLoader
