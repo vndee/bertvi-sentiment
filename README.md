@@ -76,5 +76,11 @@ All outputs will be placed at `outputs` directory.
 
 ### References
 
-- [1] Nguyen, Dat & Nguyen, Anh. (2020). PhoBERT: Pre-trained language models for Vietnamese. Arxiv preprint: https://arxiv.org/abs/2003.00744
-- [2] PhoBERT Sentiment Classification. https://github.com/suicao/PhoBert-Sentiment-Classification
+- [1] Nguyen, Dat & Nguyen, Anh. (2020). PhoBERT: Pre-trained language models for Vietnamese. ArXiv, abs/2003.00744.
+- [2] Sun, C., Qiu, X., Xu, Y., & Huang, X. (2019). How to Fine-Tune BERT for Text Classification? ArXiv, abs/1905.05583.
+- [3] Beltagy, I., Lo, K., & Cohan, A. (2019). SciBERT: A Pretrained Language Model for Scientific Text. EMNLP/IJCNLP.
+- [4] Lee, J., Tang, R., & Lin, J. (2019). What Would Elsa Do? Freezing Layers During Transformer Fine-Tuning. ArXiv, abs/1911.03090.
+- [5] Merchant, A., Rahimtoroghi, E., Pavlick, E., & Tenney, I. (2020). What Happens To BERT Embeddings During Fine-tuning? ArXiv, abs/2004.14448.
+- [6] Semnani, S.J. (2019). BERT-A : Fine-tuning BERT with Adapters and Data Augmentation.
+- [7] Hao, Y., Dong, L., Wei, F., & Xu, K. (2019). Visualizing and Understanding the Effectiveness of BERT. ArXiv, abs/1908.05620.
+- [3] PhoBERT Sentiment Classification. https://github.com/suicao/PhoBert-Sentiment-Classification

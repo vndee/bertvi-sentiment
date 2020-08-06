@@ -10,13 +10,17 @@ class PhoBertEncoder(torch.nn.Module):
     def __init__(self):
         super(PhoBertEncoder, self).__init__()
         self.config = RobertaConfig.from_pretrained(
-            os.path.join(os.getcwd(), '../pretrained', 'PhoBERT_base_transformers', 'config.json')
+            os.path.join(os.getcwd(), 'pretrained', 'PhoBERT_base_transformers', 'config.json')
         )
 
         self.phobert = RobertaModel.from_pretrained(
-            os.path.join(os.getcwd(), '../pretrained', 'PhoBERT_base_transformers', 'models.bin'),
+            os.path.join(os.getcwd(), 'pretrained', 'PhoBERT_base_transformers', 'model.bin'),
             config=self.config,
         )
+
+        for child in self.phobert.children():
+            for param in child.parameters():
+                param.requires_grad = False
 
     def __call__(self, all_input_ids, attention_mask=None, output_hidden_states=None, output_attentions=None):
         features = self.phobert(all_input_ids,
@@ -24,3 +28,4 @@ class PhoBertEncoder(torch.nn.Module):
                                 output_hidden_states=output_hidden_states,
                                 output_attentions=output_attentions)
         return features
+
