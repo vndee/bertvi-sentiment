@@ -71,7 +71,7 @@ if __name__ == '__main__':
         net = net.net.to(opts.device)
 
     if hasattr(opts, 'pretrained'):
-        net = torch.load(opts.pretrained).to(opts.device)
+        net.load_state_dict(torch.load(opts.pretrained, map_location='cpu' if opts.device == 'cpu' else None)).to(opts.device)
         logger.info(f'Loaded pretrained model {opts.encoder} for {opts.encoder}')
 
     if opts.dataset == 'vlsp2016':
@@ -241,7 +241,7 @@ if __name__ == '__main__':
             if val_acc > best_checkpoint:
                 best_checkpoint = val_acc
                 logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
-                torch.save(net, os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
+                torch.save(net.state_dict(), os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
                 with open(os.path.join(experiment_path, 'checkpoints', 'best.json'), 'w+') as stream:
                     json.dump(report, stream)
 
