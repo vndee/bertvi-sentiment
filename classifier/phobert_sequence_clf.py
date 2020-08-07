@@ -19,6 +19,3 @@ class PhoBertForSequenceClassification():
         loss, logits = self.net(x, attention_mask=attention_mask)
         return loss, logits
 
-
-enc = PhoBertForSequenceClassification()
-print(enc.net)
