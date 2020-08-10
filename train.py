@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # initialize criterion and optimizer
     if opts.encoder in ['phobert', 'bert']:
         criterion = nn.CrossEntropyLoss()
-        optimizer, linear_scheduler, constant_scheduler = create_optimizer(net, opts, len(dataset))
+        optimizer, lr_scheduler, constant_scheduler = create_optimizer(net, opts, len(dataset))
     else:
         optimizer = AdamW(net.parameters())
         lr_scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=opts.epochs
