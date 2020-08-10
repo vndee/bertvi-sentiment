@@ -23,11 +23,6 @@ class PhoBertEncoder(BertPreTrainedModel):
                 for param in child.parameters():
                     param.requires_grad = False
 
-        # if re_init > 0:
-        #     print(self.phobert.named_children())
-        #     # encoder_temp = getattr(self.phobert, 'roberta')reinit
-        #     # print(encoder_temp)
-
         self.init_weights()
 
     def __call__(self, all_input_ids, attention_mask=None, output_hidden_states=None, output_attentions=None):

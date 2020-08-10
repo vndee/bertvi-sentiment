@@ -6,10 +6,11 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch.nn as nn
+import matplotlib.pyplot as plt
+
 from tqdm import tqdm
 from yaml import load
 from utils.optimizer import set_seed, create_optimizer
-import matplotlib.pyplot as plt
 from utils.loader import VLSP2016, UITVSFC, AIVIVN
 from utils.logger import get_logger
 from collections import namedtuple
