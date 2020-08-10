@@ -1,4 +1,4 @@
-device: cpu
+device: cuda
 dataset: vlsp2016
 encoder: phobert
 epochs: 10

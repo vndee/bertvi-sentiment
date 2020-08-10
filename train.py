@@ -63,10 +63,10 @@ if __name__ == '__main__':
     net = None
     if opts.encoder == 'phobert':
         enc = PhoBertEncoder()
-        net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
+        net = SentimentAnalysisModel(enc, 768, opts.num_classes, device=opts.device).to(opts.device)
     elif opts.encoder == 'bert':
         enc = BertEncoder()
-        net = SentimentAnalysisModel(enc, 768, opts.num_classes).to(opts.device)
+        net = SentimentAnalysisModel(enc, 768, opts.num_classes, device=opts.device).to(opts.device)
     elif opts.encoder == 'roberta_clf':
         net = PhoBertForSequenceClassification()
         net = net.net.to(opts.device)

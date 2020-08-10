@@ -8,7 +8,7 @@ from torch.distributions import MultivariateNormal
 
 
 class SentimentAnalysisModel(torch.nn.Module):
-    def __init__(self, encoder, feature_shape, num_classes, num_flows=4):
+    def __init__(self, encoder, feature_shape, num_classes, num_flows=4, device='cpu'):
         super(SentimentAnalysisModel, self).__init__()
         self.encoder = encoder
         self.num_classes = num_classes
@@ -19,7 +19,8 @@ class SentimentAnalysisModel(torch.nn.Module):
         # self.soft_max = nn.Softmax(dim=1)
         # self.dropout = nn.Dropout(0.2)
         self.flows = [NSF_CL(dim=4 * feature_shape) for _ in range(num_flows)]
-        self.prior = MultivariateNormal(torch.zeros(4 * feature_shape), torch.eye(4 * feature_shape))
+        self.prior = MultivariateNormal(torch.zeros(4 * feature_shape, device=device),
+                                        torch.eye(4 * feature_shape, device=device))
         self.nf_flows = NormalizingFlowModel(self.prior, self.flows)
         self.linear = nn.Linear(4 * feature_shape, self.num_classes)
 
