@@ -31,8 +31,8 @@ class SentimentAnalysisModel(torch.nn.Module):
                        x[2][-3][:, 0, ...],
                        x[2][-4][:, 0, ...]), -1)
         # x = self.dropout(x)
-        z, prior_log_prob, log_det = self.nf_flows(x)
-        x = self.linear(z)
+        # z, prior_log_prob, log_det = self.nf_flows(x)
+        x = self.linear(x)
         # x = self.linear_1(x[1])
         # x = torch.nn.functional.relu(x)
         # x = self.linear_2(x)

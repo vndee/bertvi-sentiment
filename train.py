@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from yaml import load
-from utils.optimizer import set_seed, create_optimizer
-from utils.loader import VLSP2016, UITVSFC, AIVIVN
 from utils.logger import get_logger
 from collections import namedtuple
+from utils.loader import VLSP2016, UITVSFC, AIVIVN
 from classifier.model import SentimentAnalysisModel
+from utils.optimizer import set_seed, create_optimizer
 from classifier.phobert_sequence_clf import PhoBertForSequenceClassification
 from models.phobert import PhoBertEncoder
 from models.bert import BertEncoder
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         dataset = VLSP2016(file='SA-2016.dev',
                            max_length=opts.max_length,
                            tokenizer_type=opts.tokenizer_type)
-        test_dataset = VLSP2016(file='SA-2016.dev',
+        test_dataset = VLSP2016(file='SA-2016.dev_test',
                                 max_length=opts.max_length,
                                 tokenizer_type=opts.tokenizer_type)
     elif opts.dataset == 'uit-vsfc':
@@ -154,8 +154,6 @@ if __name__ == '__main__':
             else:
                 preds = preds.detach().numpy()
                 labels = labels.detach().numpy()
-
-            logger.info(f'Preds: {preds}')
 
             predicted = np.argmax(preds, 1)
             total += labels.shape[0]
