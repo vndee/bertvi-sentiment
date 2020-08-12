@@ -22,6 +22,8 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from transformers.optimization import AdamW
 from transformers import get_cosine_schedule_with_warmup
+from sklearn.model_selection import KFold
+
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -107,6 +109,10 @@ if __name__ == '__main__':
         os.makedirs(os.path.join(experiment_path, 'checkpoints'))
         logger.info(f'Create directory {experiment_path}')
 
+    # K-Fold Splitting
+    folds = KFold(n_splits=5, shuffle=True, random_state=opts.random_seed).get_n_splits(dataset)
+    logger.info(folds)
+
     # load data
     data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers,
                              drop_last=False)
@@ -154,6 +160,8 @@ if __name__ == '__main__':
             else:
                 preds = preds.detach().numpy()
                 labels = labels.detach().numpy()
+
+            loss.mean()
 
             predicted = np.argmax(preds, 1)
             total += labels.shape[0]
@@ -203,6 +211,8 @@ if __name__ == '__main__':
                 else:
                     preds = preds.detach().numpy()
                     labels = labels.detach().numpy()
+
+                loss.mean()
 
                 predicted = np.argmax(preds, 1)
                 total += labels.shape[0]
