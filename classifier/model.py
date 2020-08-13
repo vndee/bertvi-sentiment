@@ -39,6 +39,6 @@ class SentimentAnalysisModel(torch.nn.Module):
         # x = torch.nn.functional.relu(x)
         # x = self.linear_2(x)
         # x = self.soft_max(x)
-        return x, 0, 0
+        return x
 
 

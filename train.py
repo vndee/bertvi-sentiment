@@ -54,7 +54,7 @@ def config_parsing(arg):
     return opts
 
 
-def inference(opts, model, inputs, labels):
+def inference(opts, model, inputs, labels, criterion):
     t0 = time.time()
 
     mask = (inputs > 0).to(opts.device)
@@ -164,13 +164,14 @@ if __name__ == '__main__':
         X.append(it)
         y.append(lb)
 
-    folds = StratifiedKFold(n_splits=opts.kfold, shuffle=True, random_state=opts.random_seed).split(X, y)
+    X, y = torch.stack(X), torch.tensor(y, dtype=torch.long)
+    folds = list(StratifiedKFold(n_splits=opts.kfold, shuffle=True, random_state=opts.random_seed).split(X, y))
     test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
 
     for fold, (train_idx, val_idx) in enumerate(folds):
         logger.info(f'Training for fold number {fold}.')
-        train_fold = torch.utils.data.TensorDataset(torch.tensor(X[train_idx], dtype=torch.long), torch.tensor(y[train_idx], dtype=torch.long))
-        valid_fold = torch.utils.data.TensorDataset(torch.tensor(X[val_idx], dtype=torch.long), torch.tensor(y[val_idx], dtype=torch.long))
+        train_fold = torch.utils.data.TensorDataset(X[train_idx], y[train_idx])
+        valid_fold = torch.utils.data.TensorDataset(X[val_idx], y[val_idx])
 
         train_loader = torch.utils.data.DataLoader(train_fold, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
         valid_loader = torch.utils.data.DataLoader(valid_fold, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
@@ -188,7 +189,7 @@ if __name__ == '__main__':
                                 item[1].to(opts.device)
 
                 optimizer.zero_grad()
-                _loss, _t, predicted, labels = inference(opts, net, sents, labels)
+                _loss, _t, predicted, labels = inference(opts, net, sents, labels, criterion)
 
                 _loss.backward()
                 optimizer.step()
@@ -215,7 +216,7 @@ if __name__ == '__main__':
                     sents, labels = item[0].to(opts.device), \
                                     item[1].to(opts.device)
 
-                    _loss, _t, predicted, labels = inference(opts, net, sents, labels)
+                    _loss, _t, predicted, labels = inference(opts, net, sents, labels, criterion)
 
                     _preds = np.atleast_1d(predicted) if _preds is None else \
                         np.concatenate([_preds, np.atleast_1d(predicted)])
@@ -235,7 +236,7 @@ if __name__ == '__main__':
                     sents, labels = item[0].to(opts.device), \
                                     item[1].to(opts.device)
 
-                    _loss, _t, predicted, labels = inference(opts, net, sents, labels)
+                    _loss, _t, predicted, labels = inference(opts, net, sents, labels, criterion)
 
                     _preds = np.atleast_1d(predicted) if _preds is None else \
                         np.concatenate([_preds, np.atleast_1d(predicted)])
