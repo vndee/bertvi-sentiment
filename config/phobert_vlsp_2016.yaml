@@ -12,4 +12,5 @@ momentum: 0.9
 num_workers: 4
 random_seed: 101
 accumulation_steps: 5
+kfold: 3
 #pretrained: outputs/phobert_vlsp2016/checkpoints/checkpoint_best.vndee

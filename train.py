@@ -56,8 +56,6 @@ def config_parsing(arg):
 
 def inference(opts, model, inputs, labels):
     t0 = time.time()
-    total, total_loss = 0, 0.0
-    _preds, _targets = None, None
 
     mask = (inputs > 0).to(opts.device)
     if opts.encoder in ['phobert', 'bert']:
@@ -73,30 +71,22 @@ def inference(opts, model, inputs, labels):
         preds = preds.detach().numpy()
         labels = labels.detach().numpy()
 
-    loss.mean()
-
     predicted = np.argmax(preds, 1)
-    total += labels.shape[0]
+    t1 = time.time()
 
-    _preds = np.atleast_1d(predicted) if _preds is None else \
-        np.concatenate([_preds, np.atleast_1d(predicted)])
-    _targets = np.atleast_1d(labels) if _targets is None else \
-        np.concatenate([_targets, np.atleast_1d(labels)])
+    return loss, t1 - t0, predicted, labels
 
-    total_loss = total_loss + loss.item()
 
-    loss = float(total_loss / total)
-
+def evaluate(_preds, _targets):
     report = classification_report(_preds,
                                    _targets,
                                    output_dict=True,
                                    zero_division=1)
 
-    t1 = time.time()
     acc = report['accuracy']
     f1 = report['macro avg']['f1-score']
 
-    return loss, acc, f1, t1 - t0
+    return acc, f1
 
 
 if __name__ == '__main__':
@@ -174,7 +164,7 @@ if __name__ == '__main__':
         X.append(it)
         y.append(lb)
 
-    folds = StratifiedKFold(n_splits=3, shuffle=True, random_state=opts.random_seed).split(X, y)
+    folds = StratifiedKFold(n_splits=opts.kfold, shuffle=True, random_state=opts.random_seed).split(X, y)
     test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
 
     for fold, (train_idx, val_idx) in enumerate(folds):
@@ -190,28 +180,73 @@ if __name__ == '__main__':
         for epoch in range(opts.epochs):
             # Training
             net.train()
+            _preds, _targets = None, None
+            train_loss, train_t = 0.0, 0.0
+
             for idx, item in enumerate(tqdm(train_loader, desc=f'[F{fold}] Training EPOCH {epoch}/{opts.epochs}')):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
 
                 optimizer.zero_grad()
-                train_loss, train_acc, train_f1, train_t = inference(opts, net, sents, labels)
+                _loss, _t, predicted, labels = inference(opts, net, sents, labels)
+
+                _loss.backward()
+                optimizer.step()
+                lr_scheduler.step()
+
+                _preds = np.atleast_1d(predicted) if _preds is None else \
+                    np.concatenate([_preds, np.atleast_1d(predicted)])
+                _targets = np.atleast_1d(labels) if _targets is None else \
+                    np.concatenate([_targets, np.atleast_1d(labels)])
+
+                train_loss = train_loss + _loss.item()
+                train_t = train_t + _t
+
+            train_loss = train_loss / train_fold.__len__()
+            train_acc, train_f1 = evaluate(_preds, _targets)
 
             with torch.no_grad():
                 # Validation
                 net.eval()
+                val_loss, val_t = 0.0, 0.0
+                _preds, _targets = None, None
+
                 for idx, item in enumerate(tqdm(valid_loader, desc=f'[F{fold}] Validation EPOCH: {epoch}/{opts.epochs}')):
                     sents, labels = item[0].to(opts.device), \
                                     item[1].to(opts.device)
 
-                    val_loss, val_acc, val_f1, val_t = inference(opts, net, sents, labels)
+                    _loss, _t, predicted, labels = inference(opts, net, sents, labels)
+
+                    _preds = np.atleast_1d(predicted) if _preds is None else \
+                        np.concatenate([_preds, np.atleast_1d(predicted)])
+                    _targets = np.atleast_1d(labels) if _targets is None else \
+                        np.concatenate([_targets, np.atleast_1d(labels)])
+
+                    val_loss = val_loss + _loss.item()
+                    val_t = val_t + _t
+
+                val_loss = val_loss / valid_fold.__len__()
+                val_acc, val_f1 = evaluate(_preds, _targets)
 
                 # Testing
+                test_loss, test_t = 0.0, 0.0
+                _preds, _targets = None, None
                 for idx, item in enumerate(tqdm(test_loader, desc=f'[F{fold}] Test EPOCH: {epoch}/{opts.epochs}')):
                     sents, labels = item[0].to(opts.device), \
                                     item[1].to(opts.device)
 
-                    test_loss, test_acc, test_f1, test_t = inference(opts, net, sents, labels)
+                    _loss, _t, predicted, labels = inference(opts, net, sents, labels)
+
+                    _preds = np.atleast_1d(predicted) if _preds is None else \
+                        np.concatenate([_preds, np.atleast_1d(predicted)])
+                    _targets = np.atleast_1d(labels) if _targets is None else \
+                        np.concatenate([_targets, np.atleast_1d(labels)])
+
+                    test_loss = test_loss + _loss.item()
+                    test_t = test_t + _t
+
+                test_loss = test_loss / test_dataset.__len__()
+                test_acc, test_f1 = evaluate(_preds, _targets)
 
                 logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
                             f'Training loss: {train_loss} | '
