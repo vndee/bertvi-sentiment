@@ -193,6 +193,7 @@ if __name__ == '__main__':
             _preds, _targets = None, None
             train_loss, train_t = 0.0, 0.0
 
+            step, loss = 0, None
             for idx, item in enumerate(tqdm(train_loader, desc=f'[F{fold}] Training EPOCH {epoch}/{opts.epochs}')):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
@@ -200,9 +201,14 @@ if __name__ == '__main__':
                 optimizer.zero_grad()
                 _loss, _t, predicted, labels = inference(opts, net, sents, labels, criterion)
 
-                _loss.backward()
-                optimizer.step()
-                lr_scheduler.step()
+                loss = loss + _loss if loss is not None else _loss
+
+                step = step + 1
+                if step % opts.accumulation_steps == 0:
+                    _loss.backward()
+                    optimizer.step()
+                    lr_scheduler.step()
+                    loss = None
 
                 _preds = np.atleast_1d(predicted) if _preds is None else \
                     np.concatenate([_preds, np.atleast_1d(predicted)])
