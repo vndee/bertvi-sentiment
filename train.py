@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from transformers.optimization import AdamW
 from transformers import get_cosine_schedule_with_warmup
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
 
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -52,6 +52,51 @@ def config_parsing(arg):
     data = load(open(arg), Loader=Loader)
     opts = namedtuple('Config', data.keys())(*data.values())
     return opts
+
+
+def inference(opts, model, inputs, labels):
+    t0 = time.time()
+    total, total_loss = 0, 0.0
+    _preds, _targets = None, None
+
+    mask = (inputs > 0).to(opts.device)
+    if opts.encoder in ['phobert', 'bert']:
+        preds = model(inputs, mask)
+        loss = criterion(preds, labels)
+    else:
+        loss, preds = model(inputs, mask, labels=labels)
+
+    if opts.device == 'cuda':
+        preds = preds.detach().cpu().numpy()
+        labels = labels.detach().cpu().numpy()
+    else:
+        preds = preds.detach().numpy()
+        labels = labels.detach().numpy()
+
+    loss.mean()
+
+    predicted = np.argmax(preds, 1)
+    total += labels.shape[0]
+
+    _preds = np.atleast_1d(predicted) if _preds is None else \
+        np.concatenate([_preds, np.atleast_1d(predicted)])
+    _targets = np.atleast_1d(labels) if _targets is None else \
+        np.concatenate([_targets, np.atleast_1d(labels)])
+
+    total_loss = total_loss + loss.item()
+
+    loss = float(total_loss / total)
+
+    report = classification_report(_preds,
+                                   _targets,
+                                   output_dict=True,
+                                   zero_division=1)
+
+    t1 = time.time()
+    acc = report['accuracy']
+    f1 = report['macro avg']['f1-score']
+
+    return loss, acc, f1, t1 - t0
 
 
 if __name__ == '__main__':
@@ -109,16 +154,6 @@ if __name__ == '__main__':
         os.makedirs(os.path.join(experiment_path, 'checkpoints'))
         logger.info(f'Create directory {experiment_path}')
 
-    # K-Fold Splitting
-    folds = KFold(n_splits=5, shuffle=True, random_state=opts.random_seed).get_n_splits(dataset)
-    logger.info(folds)
-
-    # load data
-    data_loader = DataLoader(dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers,
-                             drop_last=False)
-    test_data_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers,
-                                  drop_last=False)
-
     # initialize criterion and optimizer
     if opts.encoder in ['phobert', 'bert']:
         criterion = nn.CrossEntropyLoss()
@@ -128,160 +163,83 @@ if __name__ == '__main__':
         lr_scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=opts.epochs
                                                        * len(dataset) / opts.batch_size)
 
-    df = pd.DataFrame(columns=['epoch', 'train_loss', 'train_acc', 'val_loss', 'val_acc', 'f1_neg', 'train_time', 'val_time'])
+    df = pd.DataFrame(columns=['fold', 'epoch', 'train_acc', 'val_acc', 'test_acc', 'train_loss', 'val_loss',
+                               'test_loss', 'train_f1', 'val_f1', 'test_f1', 'train_t', 'val_t', 'test_t'])
     logger.info('Start training...')
     best_checkpoint = 0.0
 
-    # train
-    for epoch in range(opts.epochs):
-        t0 = time.time()
-        epoch = epoch + 1
-        total = 0
-        total_loss = 0.0
-        train_preds = None
-        train_targets = None
+    # K-Fold Splitting
+    X, y = list(), list()
+    for it, lb in dataset:
+        X.append(it)
+        y.append(lb)
 
-        net.train()
-        for idx, item in enumerate(tqdm(data_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
-            sents, labels = item[0].to(opts.device), \
-                            item[1].to(opts.device)
+    folds = StratifiedKFold(n_splits=3, shuffle=True, random_state=opts.random_seed).split(X, y)
+    test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
 
-            optimizer.zero_grad()
+    for fold, (train_idx, val_idx) in enumerate(folds):
+        logger.info(f'Training for fold number {fold}.')
+        train_fold = torch.utils.data.TensorDataset(torch.tensor(X[train_idx], dtype=torch.long), torch.tensor(y[train_idx], dtype=torch.long))
+        valid_fold = torch.utils.data.TensorDataset(torch.tensor(X[val_idx], dtype=torch.long), torch.tensor(y[val_idx], dtype=torch.long))
 
-            if opts.encoder in ['phobert', 'bert']:
-                preds = net(sents, (sents > 0).to(opts.device))
-                loss = criterion(preds, labels)
-            else:
-                loss, preds = net(sents, (sents > 0).to(opts.device), labels=labels)
+        train_loader = torch.utils.data.DataLoader(train_fold, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
+        valid_loader = torch.utils.data.DataLoader(valid_fold, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
 
-            if opts.device == 'cuda':
-                preds = preds.detach().cpu().numpy()
-                labels = labels.detach().cpu().numpy()
-            else:
-                preds = preds.detach().numpy()
-                labels = labels.detach().numpy()
+        optimizer.zero_grad()
 
-            loss.mean()
-
-            predicted = np.argmax(preds, 1)
-            total += labels.shape[0]
-
-            train_preds = np.atleast_1d(predicted) if train_preds is None else \
-                np.concatenate([train_preds, np.atleast_1d(predicted)])
-            train_targets = np.atleast_1d(labels) if train_targets is None else \
-                np.concatenate([train_targets, np.atleast_1d(labels)])
-
-            loss.backward()
-            optimizer.step()
-            lr_scheduler.step()
-
-            total_loss = total_loss + loss.item()
-
-        train_loss = float(total_loss / total)
-
-        report = classification_report(train_preds,
-                                       train_targets,
-                                       output_dict=True,
-                                       zero_division=1)
-
-        t1 = time.time()
-        train_acc = report['accuracy']
-        train_neg_f1 = report['0']['f1-score']
-
-        with torch.no_grad():
-            total = 0
-            val_loss = 0.0
-            val_preds = None
-            val_targets = None
-
-            net.eval()
-            for idx, item in enumerate(tqdm(test_data_loader, desc=f'Validation EPOCH: {epoch}/{opts.epochs}')):
+        for epoch in range(opts.epochs):
+            # Training
+            net.train()
+            for idx, item in enumerate(tqdm(train_loader, desc=f'[F{fold}] Training EPOCH {epoch}/{opts.epochs}')):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
 
-                if opts.encoder in ['phobert', 'bert']:
-                    preds = net(sents, (sents > 0).to(opts.device))
-                    loss = criterion(preds, labels)
-                else:
-                    loss, preds = net(sents, (sents > 0).to(opts.device), labels=labels)
+                optimizer.zero_grad()
+                train_loss, train_acc, train_f1, train_t = inference(opts, net, sents, labels)
 
-                if opts.device == 'cuda':
-                    preds = preds.detach().cpu().numpy()
-                    labels = labels.detach().cpu().numpy()
-                else:
-                    preds = preds.detach().numpy()
-                    labels = labels.detach().numpy()
+            with torch.no_grad():
+                # Validation
+                net.eval()
+                for idx, item in enumerate(tqdm(valid_loader, desc=f'[F{fold}] Validation EPOCH: {epoch}/{opts.epochs}')):
+                    sents, labels = item[0].to(opts.device), \
+                                    item[1].to(opts.device)
 
-                loss.mean()
+                    val_loss, val_acc, val_f1, val_t = inference(opts, net, sents, labels)
 
-                predicted = np.argmax(preds, 1)
-                total += labels.shape[0]
+                # Testing
+                for idx, item in enumerate(tqdm(test_loader, desc=f'[F{fold}] Test EPOCH: {epoch}/{opts.epochs}')):
+                    sents, labels = item[0].to(opts.device), \
+                                    item[1].to(opts.device)
 
-                val_preds = np.atleast_1d(predicted) if val_preds is None else \
-                    np.concatenate([val_preds, np.atleast_1d(predicted)])
-                val_targets = np.atleast_1d(labels) if val_targets is None else \
-                    np.concatenate([val_targets, np.atleast_1d(labels)])
+                    test_loss, test_acc, test_f1, test_t = inference(opts, net, sents, labels)
 
-                val_loss += loss.item()
+                logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
+                            f'Training loss: {train_loss} | '
+                            f'Negative F1: {train_f1} | '
+                            f'Training time: {train_t}s')
 
-            val_loss = float(val_loss / total)
+                logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
+                            f'Validation loss: {val_loss} | '
+                            f'Negative F1: {val_f1} | '
+                            f'Validation time: {val_t}s')
 
-            report = classification_report(val_preds,
-                                           val_targets,
-                                           output_dict=True,
-                                           zero_division=1)
+                logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {test_acc} | '
+                            f'Validation loss: {test_loss} | '
+                            f'Negative F1: {test_f1} | '
+                            f'Validation time: {test_t}s')
 
-            t2 = time.time()
-            val_acc = report['accuracy']
-            neg_f1 = report['0']['f1-score']
+                df.loc[len(df)] = [fold, epoch, train_acc, val_acc, test_acc, train_loss, val_loss, test_loss,
+                                   train_f1, val_f1, test_f1, train_t, val_t, test_t]
 
-            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
-                        f'Training loss: {train_loss} | '
-                        f'Negative F1: {train_neg_f1} | '
-                        f'Training time: {t1 - t0}s')
-
-            logger.info(f'EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
-                        f'Validation loss: {train_loss} | '
-                        f'Negative F1: {neg_f1} | '
-                        f'Validation time: {t2 - t1}s')
-
-            df.loc[len(df)] = [epoch, train_loss, train_acc, val_loss, val_acc, neg_f1, t1 - t0, t2 - t1]
-
-            if val_acc > best_checkpoint:
-                best_checkpoint = val_acc
-                logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
-                torch.save(net.state_dict(), os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
-                with open(os.path.join(experiment_path, 'checkpoints', 'best.json'), 'w+') as stream:
-                    json.dump(report, stream)
+                if test_f1 > best_checkpoint:
+                    best_checkpoint = test_f1
+                    logger.info(f'[F{fold}] New state-of-the-art model detected. Saved to {experiment_path}.')
+                    torch.save(net.state_dict(), os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
+                    with open(os.path.join(experiment_path, 'checkpoints', 'best.json'), 'w+') as stream:
+                        json.dump({
+                            'test_f1': test_f1
+                        }, stream)
 
     # save history to csv
     df.to_csv(os.path.join(experiment_path, 'history.csv'))
-
-    # plot figure
-    labels = ['Train loss', 'Validation loss', 'Train accuracy', 'Validation accuracy']
-    fig, ax1 = plt.subplots()
-
-    ax1.set_xlabel('epoch(s)')
-    ax1.set_ylabel('loss')
-
-    l1 = ax1.plot(df['epoch'].astype(int).tolist(), df['train_loss'].tolist(), 'b', label=labels[0])[0]
-    l2 = ax1.plot(df['epoch'].astype(int).tolist(), df['val_loss'].tolist(), 'g', label=labels[1])[0]
-
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('accuracy')
-
-    l3 = ax2.plot(df['epoch'].astype(int).tolist(), df['train_acc'].tolist(), 'r', label=labels[2])[0]
-    l4 = ax2.plot(df['epoch'].astype(int).tolist(), df['val_acc'].tolist(), 'y', label=labels[3])[0]
-
-    fig.legend([l1, l2, l3, l4],
-               labels,
-               bbox_to_anchor=(0.45, 0.35))
-
-    fig.tight_layout()
-    plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.png'),
-                dpi=500)
-    plt.savefig(os.path.join(experiment_path, f'{opts.encoder}_{opts.dataset}.pdf'),
-                dpi=500,
-                format='pdf')
-
     logger.info('Training completed')

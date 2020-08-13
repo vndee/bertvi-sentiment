@@ -17,7 +17,7 @@ class SentimentAnalysisModel(torch.nn.Module):
         self.linear_1 = nn.Linear(in_features=self.feature_shape, out_features=self.feature_shape//2)
         self.linear_2 = nn.Linear(in_features=self.feature_shape//2, out_features=self.num_classes)
         # self.soft_max = nn.Softmax(dim=1)
-        # self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(0.2)
         self.flows = [NSF_CL(dim=4 * feature_shape) for _ in range(num_flows)]
         self.prior = MultivariateNormal(torch.zeros(4 * feature_shape, device=device),
                                         torch.eye(4 * feature_shape, device=device))
@@ -31,14 +31,14 @@ class SentimentAnalysisModel(torch.nn.Module):
                        x[2][-2][:, 0, ...],
                        x[2][-3][:, 0, ...],
                        x[2][-4][:, 0, ...]), -1)
-        # x = self.dropout(x)
+        x = self.dropout(x)
         # z, prior_log_prob, log_det = self.nf_flows(x)
-        x = self.norm(x)
+        # x = self.norm(x)
         x = self.linear(x)
         # x = self.linear_1(x[1])
         # x = torch.nn.functional.relu(x)
         # x = self.linear_2(x)
         # x = self.soft_max(x)
-        return x
+        return x, 0, 0
 
 
