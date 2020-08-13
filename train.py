@@ -49,6 +49,10 @@ args = arg.parse_args()
 
 
 def config_parsing(arg):
+    """
+
+    :rtype: Tuple
+    """
     data = load(open(arg), Loader=Loader)
     opts = namedtuple('Config', data.keys())(*data.values())
     return opts
@@ -173,8 +177,14 @@ if __name__ == '__main__':
         train_fold = torch.utils.data.TensorDataset(X[train_idx], y[train_idx])
         valid_fold = torch.utils.data.TensorDataset(X[val_idx], y[val_idx])
 
-        train_loader = torch.utils.data.DataLoader(train_fold, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
-        valid_loader = torch.utils.data.DataLoader(valid_fold, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
+        train_loader = torch.utils.data.DataLoader(train_fold,
+                                                   batch_size=opts.batch_size,
+                                                   shuffle=True,
+                                                   num_workers=opts.num_workers)
+        valid_loader = torch.utils.data.DataLoader(valid_fold,
+                                                   batch_size=opts.batch_size,
+                                                   shuffle=True,
+                                                   num_workers=opts.num_workers)
 
         optimizer.zero_grad()
 
@@ -212,7 +222,8 @@ if __name__ == '__main__':
                 val_loss, val_t = 0.0, 0.0
                 _preds, _targets = None, None
 
-                for idx, item in enumerate(tqdm(valid_loader, desc=f'[F{fold}] Validation EPOCH: {epoch}/{opts.epochs}')):
+                for idx, item in enumerate(tqdm(valid_loader,
+                                                desc=f'[F{fold}] Validation EPOCH: {epoch}/{opts.epochs}')):
                     sents, labels = item[0].to(opts.device), \
                                     item[1].to(opts.device)
 
@@ -250,19 +261,19 @@ if __name__ == '__main__':
                 test_acc, test_f1 = evaluate(_preds, _targets)
 
                 logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Training accuracy: {train_acc} | '
-                            f'Training loss: {train_loss} | '
-                            f'Negative F1: {train_f1} | '
-                            f'Training time: {train_t}s')
+                            f'Loss: {train_loss} | '
+                            f'F1: {train_f1} | '
+                            f'Time: {train_t}s')
 
                 logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
-                            f'Validation loss: {val_loss} | '
-                            f'Negative F1: {val_f1} | '
-                            f'Validation time: {val_t}s')
+                            f'Loss: {val_loss} | '
+                            f'F1: {val_f1} | '
+                            f'Time: {val_t}s')
 
-                logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {test_acc} | '
-                            f'Validation loss: {test_loss} | '
-                            f'Negative F1: {test_f1} | '
-                            f'Validation time: {test_t}s')
+                logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Test accuracy: {test_acc} | '
+                            f'Loss: {test_loss} | '
+                            f'F1: {test_f1} | '
+                            f'Time: {test_t}s')
 
                 df.loc[len(df)] = [fold, epoch, train_acc, val_acc, test_acc, train_loss, val_loss, test_loss,
                                    train_f1, val_f1, test_f1, train_t, val_t, test_t]
