@@ -157,8 +157,8 @@ if __name__ == '__main__':
         lr_scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=200, num_training_steps=opts.epochs
                                                        * len(dataset) / opts.batch_size)
 
-    df = pd.DataFrame(columns=['fold', 'epoch', 'train_acc', 'val_acc', 'test_acc', 'train_loss', 'val_loss',
-                               'test_loss', 'train_f1', 'val_f1', 'test_f1', 'train_t', 'val_t', 'test_t'])
+    df = pd.DataFrame(columns=['fold', 'epoch', 'train_acc', 'test_acc', 'train_loss',
+                               'test_loss', 'train_f1', 'test_f1', 'train_t', 'test_t'])
     logger.info('Start training...')
     best_checkpoint = 0.0
 
@@ -172,16 +172,13 @@ if __name__ == '__main__':
     folds = list(StratifiedKFold(n_splits=opts.kfold, shuffle=True, random_state=opts.random_seed).split(X, y))
     test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=True, num_workers=opts.num_workers)
 
+    logger.info(f'There are {folds.__len__()} fold(s).')
     for fold, (train_idx, val_idx) in enumerate(folds):
+        idx = np.concatenate((train_idx, val_idx))
         logger.info(f'Training for fold number {fold}.')
-        train_fold = torch.utils.data.TensorDataset(X[train_idx], y[train_idx])
-        valid_fold = torch.utils.data.TensorDataset(X[val_idx], y[val_idx])
-
+        train_fold = torch.utils.data.TensorDataset(X[idx], y[idx])
+        logger.info(f'There are {train_fold.__len__()} sample in fold number {fold}')
         train_loader = torch.utils.data.DataLoader(train_fold,
-                                                   batch_size=opts.batch_size,
-                                                   shuffle=True,
-                                                   num_workers=opts.num_workers)
-        valid_loader = torch.utils.data.DataLoader(valid_fold,
                                                    batch_size=opts.batch_size,
                                                    shuffle=True,
                                                    num_workers=opts.num_workers)
@@ -194,6 +191,7 @@ if __name__ == '__main__':
             _preds, _targets = None, None
             train_loss, train_t = 0.0, 0.0
 
+            loss = None
             for idx, item in enumerate(tqdm(train_loader, desc=f'[F{fold}] Training EPOCH {epoch}/{opts.epochs}')):
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
@@ -201,9 +199,7 @@ if __name__ == '__main__':
                 optimizer.zero_grad()
                 _loss, _t, predicted, labels = inference(opts, net, sents, labels, criterion)
 
-                _loss.backward()
-                optimizer.step()
-                lr_scheduler.step()
+                loss = loss + _loss if loss is not None else _loss
 
                 _preds = np.atleast_1d(predicted) if _preds is None else \
                     np.concatenate([_preds, np.atleast_1d(predicted)])
@@ -213,33 +209,14 @@ if __name__ == '__main__':
                 train_loss = train_loss + _loss.item()
                 train_t = train_t + _t
 
+            loss.backward()
+            optimizer.step()
+            lr_scheduler.step()
+
             train_loss = train_loss / train_fold.__len__()
             train_acc, train_f1 = evaluate(_preds, _targets)
 
             with torch.no_grad():
-                # Validation
-                net.eval()
-                val_loss, val_t = 0.0, 0.0
-                _preds, _targets = None, None
-
-                for idx, item in enumerate(tqdm(valid_loader,
-                                                desc=f'[F{fold}] Validation EPOCH: {epoch}/{opts.epochs}')):
-                    sents, labels = item[0].to(opts.device), \
-                                    item[1].to(opts.device)
-
-                    _loss, _t, predicted, labels = inference(opts, net, sents, labels, criterion)
-
-                    _preds = np.atleast_1d(predicted) if _preds is None else \
-                        np.concatenate([_preds, np.atleast_1d(predicted)])
-                    _targets = np.atleast_1d(labels) if _targets is None else \
-                        np.concatenate([_targets, np.atleast_1d(labels)])
-
-                    val_loss = val_loss + _loss.item()
-                    val_t = val_t + _t
-
-                val_loss = val_loss / valid_fold.__len__()
-                val_acc, val_f1 = evaluate(_preds, _targets)
-
                 # Testing
                 test_loss, test_t = 0.0, 0.0
                 _preds, _targets = None, None
@@ -265,18 +242,13 @@ if __name__ == '__main__':
                             f'F1: {train_f1} | '
                             f'Time: {train_t}s')
 
-                logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Validation accuracy: {val_acc} | '
-                            f'Loss: {val_loss} | '
-                            f'F1: {val_f1} | '
-                            f'Time: {val_t}s')
-
                 logger.info(f'[F{fold}] EPOCH [{epoch}/{opts.epochs}] Test accuracy: {test_acc} | '
                             f'Loss: {test_loss} | '
                             f'F1: {test_f1} | '
                             f'Time: {test_t}s')
 
-                df.loc[len(df)] = [fold, epoch, train_acc, val_acc, test_acc, train_loss, val_loss, test_loss,
-                                   train_f1, val_f1, test_f1, train_t, val_t, test_t]
+                df.loc[len(df)] = [fold, epoch, train_acc, test_acc, train_loss, test_loss,
+                                   train_f1, test_f1, train_t, test_t]
 
                 if test_f1 > best_checkpoint:
                     best_checkpoint = test_f1
