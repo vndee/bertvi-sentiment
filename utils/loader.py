@@ -1,4 +1,5 @@
 import os
+import torch
 import pandas as pd
 from utils.logger import get_logger
 from torch.utils.data import Dataset
@@ -126,3 +127,76 @@ class UITVSFC(Dataset):
 
     def __len__(self):
         return len(self.sents)
+
+class VLSP2018(Dataset):
+    def __init__(self,
+                 data='Hotel',
+                 file='train',
+                 path=os.path.join('data', 'VLSP2018'),
+                 max_length=512,
+                 tokenizer_type=BERTvi[0]):
+        super(VLSP2018, self).__init__()
+        self.max_length = max_length
+        with open(os.path.join(path, f'VLSP2018-SA-{data}-{file}.txt'), mode='r', encoding='utf-8-sig') as stream:
+            self.file = stream.read()
+
+        self.data = data.lower()
+
+        self.entity_hotel = ['HOTEL', 'ROOMS', 'ROOM_AMENITIES', 'FACILITIES', 'SERVICE', 'LOCATION', 'FOOD&DRINKS']
+        self.attribute_hotel = ['GENERAL', 'PRICES', 'DESIGN&FEATURES', 'CLEANLINESS', 'COMFORT', 'QUALITY', 'STYLE&OPTIONS', 'MISCELLANEOUS']
+        self.aspect_hotel = [f'{x}#{y}' for x in self.entity_hotel for y in self.attribute_hotel]
+
+        self.entity_restaurant = ['RESTAURANT', 'FOOD', 'DRINKS', 'AMBIENCE', 'SERVICE', 'LOCATION']
+        self.attribute_restaurant = ['GENERAL', 'PRICES', 'QUALITY', 'STYLE&OPTIONS', 'MISCELLANEOUS']
+        self.aspect_restaurant = [f'{x}#{y}' for x in self.entity_restaurant for y in self.attribute_restaurant]
+
+        self.polarities = ['negative', 'neural', 'positive']
+
+        self.file = self.file.split('\n\n')
+
+        self.tokenizer_type = tokenizer_type
+        if tokenizer_type == BERTvi[0]:
+            self.tokenizer = PhoBertTokenizer(max_length=self.max_length)
+        else:
+            self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
+
+    def label_encode(self, x):
+        if x[0] == '{':
+            x = x[1:]
+
+        if x[-1] == '}':
+            x = x[:-1]
+
+        aspect, polarity = x.split(',')
+        lb = None
+
+        if self.data == 'hotel':
+            lb = self.aspect_hotel.index(aspect)
+        elif self.data == 'restaurant':
+            lb = self.aspect_restaurant.index(aspect)
+
+        polarity = polarity.strip()
+        polarity = ['negative', 'neutral', 'positive'].index(polarity)
+        return aspect, lb, polarity
+
+    def __getitem__(self, item):
+        lines = self.file[item].split('\n')
+        label = [self.label_encode(line.strip()) for line in lines[2].split('},')]
+
+        if self.data == 'hotel':
+            aspect = torch.zeros((self.aspect_hotel.__len__()))
+            polarity = torch.zeros((self.aspect_hotel.__len__()))
+        else:
+            aspect = torch.zeros((self.aspect_restaurant.__len__()))
+            polarity = torch.zeros((self.aspect_restaurant.__len__()))
+
+        for lb in label:
+            aspect[lb[1]] = 1
+            polarity[lb[1]] = lb[2]
+
+        text = lines[1].encode('utf-8')
+        text = text.decode('utf-8-sig').strip()
+        return self.tokenizer(text), aspect, polarity
+
+    def __len__(self):
+        return self.file.__len__()

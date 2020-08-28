@@ -1,7 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
 outputs/
-data/
 pretrained/
 vncorenlp/
 # Byte-compiled / optimized / DLL files
