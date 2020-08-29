@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import math
 import torch
 import argparse
 import numpy as np
@@ -11,6 +12,7 @@ from yaml import load
 from utils.logger import get_logger
 from collections import namedtuple
 from utils.loader import VLSP2018
+from models.phobert import PhoBertEncoder
 from utils.optimizer import set_seed
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
@@ -88,6 +90,70 @@ def evaluate(_preds, _targets):
     return acc, f1
 
 
+class SelfAttention(torch.nn.Module):
+    def __init__(self, num_attention_heads, hidden_size):
+        super(SelfAttention, self).__init__()
+        self.num_attention_heads = num_attention_heads
+        self.hidden_size = hidden_size
+        self.attention_head_size = self.hidden_size // self.num_attention_heads
+        self.all_head_size = self.num_attention_heads * self.attention_head_size
+
+        self.query = torch.nn.Linear(self.hidden_size, self.all_head_size)
+        self.key = torch.nn.Linear(self.hidden_size, self.all_head_size)
+        self.value = torch.nn.Linear(self.hidden_size, self.all_head_size)
+
+        self.dense = torch.nn.Linear(self.hidden_size, self.hidden_size)
+
+    def transpose_for_scores(self, x):
+        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
+        x = x.view(*new_x_shape)
+        return x.permute(0, 2, 1, 3)
+
+    def forward(self, x):
+        mixed_query_layer = self.query(x)
+        mixed_key_layer = self.key(x)
+        mixed_value_layer = self.value(x)
+
+        query_layer = self.transpose_for_scores(mixed_query_layer)
+        key_layer = self.transpose_for_scores(mixed_key_layer)
+        value_layer = self.transpose_for_scores(mixed_value_layer)
+
+        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2)) # [Batch_size x Num_of_heads x Seq_length x Seq_length]
+        attention_scores = attention_scores / math.sqrt(self.attention_head_size) # [Batch_size x Num_of_heads x Seq_length x Seq_length]
+        attention_probs = torch.nn.Softmax(dim=-1)(attention_scores)                    # [Batch_size x Num_of_heads x Seq_length x Seq_length]
+
+        context_layer = torch.matmul(attention_probs, value_layer)                # [Batch_size x Num_of_heads x Seq_length x Head_size]
+        context_layer = context_layer.permute(0, 2, 1, 3).contiguous()            # [Batch_size x Seq_length x Num_of_heads x Head_size]
+
+        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,) # [Batch_size x Seq_length x Hidden_size]
+        context_layer = context_layer.view(*new_context_layer_shape)              # [Batch_size x Seq_length x Hidden_size]
+
+        output = self.dense(context_layer)
+        return output[0]
+
+
+class Model(torch.nn.Module):
+    def __init__(self, aspect_num, polarity_num):
+        super(Model, self).__init__()
+        self.base_encoder = PhoBertEncoder()
+        self.lstm_encoder = torch.nn.LSTM(768, 512, bidirectional=True, batch_first=True)
+        self.aspect_head = torch.nn.Linear(1024, aspect_num)
+        self.polarity_head = torch.nn.Linear(aspect_num + 768, polarity_num)
+        self.aspect_one_hot = torch.eye(aspect_num)
+        self.aspect_num = aspect_num
+
+    def forward(self, x, attention_mask):
+        x = self.base_encoder(x, attention_mask=attention_mask)
+        lstm_out, _ = self.lstm_encoder(x[2][-1])
+        x = self.aspect_head(lstm_out[:, -1, :])
+        x = torch.nn.functional.sigmoid(x)
+        mask = (x > 0.5).nonzero()
+        ap_var = torch.zeros((x.shape[0], x.shape[1], self.aspect_num))
+        # ap_var[mask] = self.aspect_one_hot[mask[:1]]
+        print(ap_var)
+        return lstm_out
+
+
 if __name__ == '__main__':
     # config parsing
     opts = config_parsing(args.config)
@@ -96,11 +162,11 @@ if __name__ == '__main__':
     logger.info(opts)
 
     dataset = VLSP2018()
-    test_dataset = VLSP2018(data='Hotel', file='test')
+    test_dataset = VLSP2018(data='Hotel', file='dev')
 
     # initialize models
-    net = PhoBertForSequenceClassification(dataset.aspect_hotel.__len__())
-    net = net.net.to(opts.device)
+    net = Model(dataset.aspect_hotel.__len__(), 3)
+    net = net.to(opts.device)
     print(net)
 
     if hasattr(opts, 'pretrained'):
@@ -131,6 +197,7 @@ if __name__ == '__main__':
                                                num_workers=opts.num_workers)
 
     optimizer.zero_grad()
+    aspect_criterion = torch.nn.BCELoss()
 
     for epoch in range(opts.epochs):
         # Training
@@ -139,19 +206,22 @@ if __name__ == '__main__':
         train_loss, train_t = 0.0, 0.0
 
         steps, total_loss = 0, 0.0
-        for idx, item in enumerate(tqdm(train_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
-            sents, aspect, polarity = torch.tensor(item[0], dtype=torch.long, device=opts.device), \
-                                      torch.tensor(item[1], dtype=torch.long, device=opts.device), \
-                                      torch.tensor(item[2], dtype=torch.long, device=opts.device)
+        for idx, (sents, aspect, polarity) in enumerate(tqdm(train_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
+            sents, aspect, polarity = torch.tensor(sents, dtype=torch.long, device=opts.device), \
+                                      torch.tensor(aspect, dtype=torch.long, device=opts.device), \
+                                      torch.tensor(polarity, dtype=torch.long, device=opts.device)
 
             optimizer.zero_grad()
 
             mask = (sents > 0).to(opts.device)
-            preds = net(input_ids=sents, attention_mask=mask)
-
+            preds = net(sents, attention_mask=mask)
             loss = torch.nn.functional.cross_entropy(preds, aspect)
 
             loss.backward()
+            if idx % opts.accumulation_steps == 0:
+                optimizer.step()
+                lr_scheduler.step()
+
             total_loss = total_loss + loss.item()
 
             if opts.device == 'cuda':

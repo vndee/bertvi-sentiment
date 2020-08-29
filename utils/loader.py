@@ -128,16 +128,17 @@ class UITVSFC(Dataset):
     def __len__(self):
         return len(self.sents)
 
+
 class VLSP2018(Dataset):
     def __init__(self,
                  data='Hotel',
                  file='train',
                  path=os.path.join('data', 'VLSP2018'),
-                 max_length=512,
+                 max_length=256,
                  tokenizer_type=BERTvi[0]):
         super(VLSP2018, self).__init__()
         self.max_length = max_length
-        with open(os.path.join(path, f'VLSP2018-SA-{data}-{file}.txt'), mode='r', encoding='utf-8-sig') as stream:
+        with open(os.path.join(path, f'VLSP2018-SA-{data}-{file}.prod'), mode='r', encoding='utf-8-sig') as stream:
             self.file = stream.read()
 
         self.data = data.lower()
@@ -161,13 +162,9 @@ class VLSP2018(Dataset):
             self.tokenizer = BertViTokenizer(max_length=self.max_length, shortcut_pretrained=BERTvi[1])
 
     def label_encode(self, x):
-        if x[0] == '{':
-            x = x[1:]
+        x = x.split('\n')
 
-        if x[-1] == '}':
-            x = x[:-1]
-
-        aspect, polarity = x.split(',')
+        aspect, polarity = x[0].split(',')
         lb = None
 
         if self.data == 'hotel':
@@ -177,25 +174,24 @@ class VLSP2018(Dataset):
 
         polarity = polarity.strip()
         polarity = ['negative', 'neutral', 'positive'].index(polarity)
+        aspect = aspect.replace('#', ', ').replace('&', ' and ').lower()
         return aspect, lb, polarity
 
     def __getitem__(self, item):
         lines = self.file[item].split('\n')
-        label = [self.label_encode(line.strip()) for line in lines[2].split('},')]
+        label = self.label_encode(lines[1].strip())
 
         if self.data == 'hotel':
             aspect = torch.zeros((self.aspect_hotel.__len__()))
-            polarity = torch.zeros((self.aspect_hotel.__len__()))
+            polarity = torch.zeros((3))
         else:
             aspect = torch.zeros((self.aspect_restaurant.__len__()))
-            polarity = torch.zeros((self.aspect_restaurant.__len__()))
+            polarity = torch.zeros((3))
 
-        for lb in label:
-            aspect[lb[1]] = 1
-            polarity[lb[1]] = lb[2]
+        aspect[label[1]] = 1
+        polarity[label[2]] = 1
 
-        text = lines[1].encode('utf-8')
-        text = text.decode('utf-8-sig').strip()
+        text = lines[0].strip()
         return self.tokenizer(text), aspect, polarity
 
     def __len__(self):

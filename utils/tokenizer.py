@@ -22,7 +22,7 @@ class BPEConfig:
 
 
 class PhoBertTokenizer:
-    def __init__(self, max_length=512):
+    def __init__(self, max_length=256):
         self.bpe = fastBPE(BPEConfig)
         self.vocab = Dictionary()
         self.vocab.add_from_file(os.path.join(os.getcwd(),

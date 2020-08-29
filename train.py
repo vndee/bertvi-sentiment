@@ -189,6 +189,9 @@ if __name__ == '__main__':
             loss = criterion(preds, labels)
 
             loss.backward()
+            if idx % opts.accumulation_steps:
+                optimizer.step()
+                lr_scheduler.step()
 
             if opts.device == 'cuda':
                 preds = preds.detach().cpu().numpy()
@@ -197,8 +200,9 @@ if __name__ == '__main__':
                 preds = preds.detach().numpy()
                 labels = labels.detach().numpy()
 
-            _preds = np.atleast_1d(preds) if _preds is None else \
-                np.concatenate([_preds, np.atleast_1d(preds)])
+            predicted = np.argmax(preds, 1)
+            _preds = np.atleast_1d(predicted) if _preds is None else \
+                np.concatenate([_preds, np.atleast_1d(predicted)])
             _targets = np.atleast_1d(labels) if _targets is None else \
                 np.concatenate([_targets, np.atleast_1d(labels)])
 
@@ -210,7 +214,7 @@ if __name__ == '__main__':
         with torch.no_grad():
             # Validation
             net.eval()
-            val_loss = 0.0, 0.0
+            val_loss = 0.0
             _preds, _targets = None, None
 
             for idx, item in enumerate(tqdm(valid_loader,
@@ -229,8 +233,9 @@ if __name__ == '__main__':
                     preds = preds.detach().numpy()
                     labels = labels.detach().numpy()
 
-                _preds = np.atleast_1d(preds) if _preds is None else \
-                    np.concatenate([_preds, np.atleast_1d(preds)])
+                predicted = np.argmax(preds, 1)
+                _preds = np.atleast_1d(predicted) if _preds is None else \
+                    np.concatenate([_preds, np.atleast_1d(predicted)])
                 _targets = np.atleast_1d(labels) if _targets is None else \
                     np.concatenate([_targets, np.atleast_1d(labels)])
 

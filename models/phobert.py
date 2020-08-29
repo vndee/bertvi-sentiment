@@ -25,7 +25,7 @@ class PhoBertEncoder(BertPreTrainedModel):
 
         self.init_weights()
 
-    def __call__(self, all_input_ids, attention_mask=None, output_hidden_states=None, output_attentions=None):
+    def __call__(self, all_input_ids, attention_mask=None, output_hidden_states=True, output_attentions=True):
         features = self.phobert(all_input_ids,
                                 attention_mask=attention_mask,
                                 output_hidden_states=output_hidden_states,
