@@ -8,6 +8,8 @@ import torch.nn.functional as F
 from utils.loader import get_logger
 from train import config_parsing
 from utils.loader import AIVIVN
+from models.phobert import PhoBertEncoder
+from classifier.model import SentimentAnalysisModel
 
 experiment_path = 'outputs'
 
@@ -20,9 +22,15 @@ if __name__ == '__main__':
     logger = get_logger(f'Evaluation_{args.encoder}_{args.dataset}')
     logger.info(args)
 
-    net = torch.load(args.pretrained)
-    net.to(args.device)
+    enc = PhoBertEncoder()
+    net = SentimentAnalysisModel(enc, 768, args.num_classes, device=args.device)
+    net = torch.nn.DataParallel(net)
+
     net.eval()
+
+    if hasattr(args, 'pretrained'):
+        net.load_state_dict(torch.load(args.pretrained))
+        logger.info(f'Loaded pretrained model {args.encoder} for {args.encoder}')
 
     logger.info(f'Loaded {args.encoder}-{args.dataset}')
 

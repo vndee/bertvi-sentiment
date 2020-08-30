@@ -111,7 +111,7 @@ if __name__ == '__main__':
         net = net.net.to(opts.device)
 
     if hasattr(opts, 'pretrained'):
-        net.load_state_dict(torch.load(opts.pretrained, map_location='cpu' if opts.device == 'cpu' else None)).to(opts.device)
+        net.load_state_dict(torch.load(opts.pretrained))
         logger.info(f'Loaded pretrained model {opts.encoder} for {opts.encoder}')
 
     if opts.dataset == 'vlsp2016':
