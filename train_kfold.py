@@ -111,6 +111,8 @@ if __name__ == '__main__':
         net = PhoBertForSequenceClassification()
         net = net.net.to(opts.device)
 
+    net = torch.nn.DataParallel(net)
+
     if hasattr(opts, 'pretrained'):
         net.load_state_dict(torch.load(opts.pretrained, map_location='cpu' if opts.device == 'cpu' else None)).to(opts.device)
         logger.info(f'Loaded pretrained model {opts.encoder} for {opts.encoder}')
