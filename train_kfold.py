@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # initialize models
     net = None
     if opts.encoder == 'phobert':
-        enc = PhoBertEncoder()
+        enc = PhoBertEncoder(frozen=True)
         net = SentimentAnalysisModel(enc, 768, opts.num_classes, device=opts.device).to(opts.device)
     elif opts.encoder == 'bert':
         enc = BertEncoder()

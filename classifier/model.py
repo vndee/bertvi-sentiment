@@ -24,17 +24,21 @@ class SentimentAnalysisModel(torch.nn.Module):
         self.nf_flows = NormalizingFlowModel(self.prior, self.flows)
         self.norm = nn.BatchNorm1d(4 * feature_shape)
         self.linear = nn.Linear(4 * feature_shape, self.num_classes)
+        self.lstm_encoder = torch.nn.LSTM(768, 512, bidirectional=True, batch_first=True)
+        self.linear_lstm = torch.nn.Linear(512, self.num_classes)
 
     def __call__(self, x, attention_mask=None):
         x = self.encoder(x, attention_mask, output_hidden_states=True, output_attentions=True)
-        x = torch.cat((x[2][-1][:, 0, ...],
-                       x[2][-2][:, 0, ...],
-                       x[2][-3][:, 0, ...],
-                       x[2][-4][:, 0, ...]), -1)
-        x = self.dropout(x)
+        o, c = self.lstm_encoder(x[2][-1])
+
+        # x = torch.cat((x[2][-1][:, 0, ...],
+        #                x[2][-2][:, 0, ...],
+        #                x[2][-3][:, 0, ...],
+        #                x[2][-4][:, 0, ...]), -1)
+        # x = self.dropout(x)
         # z, prior_log_prob, log_det = self.nf_flows(x)
         # x = self.norm(x)
-        x = self.linear(x)
+        x = self.linear_lstm(x)
         # x = self.linear_1(x[1])
         # x = torch.nn.functional.relu(x)
         # x = self.linear_2(x)
