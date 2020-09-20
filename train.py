@@ -36,7 +36,7 @@ except Exception as ex:
 experiment_path = 'outputs'
 
 configs = [
-    # 'slot_attn_vlsp_2016.yaml',
+    'slot_attn_vlsp_2016.yaml',
     'bilstm_vlsp_2016.yaml',
     'phobert_vlsp_2016.yaml',
     'phobert_uit_vsfc.yaml',
@@ -200,6 +200,7 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             mask = (sents > 0).to(opts.device)
             preds = net(sents, attention_mask=mask)
+            logger.info(preds.shape)
             loss = criterion(preds, labels)
 
             loss.backward()

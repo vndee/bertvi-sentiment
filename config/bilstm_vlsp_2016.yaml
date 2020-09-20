@@ -1,7 +1,7 @@
 device: cuda
 dataset: vlsp2016
 encoder: bilstm
-epochs: 50
+epochs: 20
 batch_size: 8
 feature_shape: 768
 num_classes: 3
