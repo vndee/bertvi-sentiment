@@ -200,7 +200,6 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             mask = (sents > 0).to(opts.device)
             preds = net(sents, attention_mask=mask)
-            logger.info(preds.shape)
             loss = criterion(preds, labels)
 
             loss.backward()

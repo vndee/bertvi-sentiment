@@ -71,15 +71,16 @@ class ModelSlotAttention(nn.Module):
         for params in self.encoder.parameters():
             params.requires_grad = False
 
-        self.slot_attn = SlotAttention(num_slots=num_aspect,
+        self.slot_attn = SlotAttention(num_slots=3,
                                        dim=embedding_dim,
                                        hidden_dim=slot_attention_hidden_dim)
-        self.linear = nn.Linear(in_features=embedding_dim, out_features=num_polarity)
-        self.softmax = nn.Softmax(dim=-1)
+        self.linear = nn.Linear(in_features=embedding_dim, out_features=1)
+        self.relu = nn.ReLU()
+        self.out = nn.Linear(in_features=num_polarity, out_features=3)
 
     def forward(self, x, attention_mask):
         x = self.encoder(x, attention_mask=attention_mask)
         x = self.slot_attn(x[0])
         x = self.linear(x)
-        x = self.softmax(x)
+        x = x.squeeze(-1)
         return x
