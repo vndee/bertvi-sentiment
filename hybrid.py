@@ -14,6 +14,9 @@ class BiLSTM_Attention(nn.Module):
     def __init__(self, enc=None, embedding_size=768, lstm_hidden_size=512, num_classes=3, device='cuda'):
         super(BiLSTM_Attention, self).__init__()
         self.encoder = enc
+        for params in self.encoder.parameters():
+            params.requires_grad = False
+
         self.embedding_size = embedding_size
         self.lstm_hidden_size = lstm_hidden_size
         self.num_classes = num_classes
