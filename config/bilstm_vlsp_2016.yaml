@@ -13,4 +13,4 @@ num_workers: 4
 random_seed: 101
 accumulation_steps: 20
 kfold: 5
-#pretrained: outputs/phobert_vlsp2016/checkpoints/checkpoint_best.vndee
+pretrained: outputs/bilstm_vlsp2016/checkpoints/checkpoint_best.vndee
