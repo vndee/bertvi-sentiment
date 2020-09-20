@@ -17,6 +17,7 @@ from utils.optimizer import set_seed, create_optimizer
 from classifier.phobert_sequence_clf import PhoBertForSequenceClassification
 from models.phobert import PhoBertEncoder
 from models.bert import BertEncoder
+from hybrid import BiLSTM_Attention
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from transformers.optimization import AdamW
@@ -34,6 +35,7 @@ except Exception as ex:
 experiment_path = 'outputs'
 
 configs = [
+    'bilstm_vlsp_2016.yaml',
     'phobert_vlsp_2016.yaml',
     'phobert_uit_vsfc.yaml',
     'phobert_aivivn.yaml',
@@ -109,6 +111,10 @@ if __name__ == '__main__':
     elif opts.encoder == 'roberta_clf':
         net = PhoBertForSequenceClassification()
         net = net.net.to(opts.device)
+    elif opts.encoder == 'bilstm':
+        enc = PhoBertEncoder()
+        net = BiLSTM_Attention(enc)
+        net = net.to(opts.device)
 
     if hasattr(opts, 'pretrained'):
         net.load_state_dict(torch.load(opts.pretrained))

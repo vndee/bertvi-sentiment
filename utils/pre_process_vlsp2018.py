@@ -1,6 +1,6 @@
 import os
 
-data = 'Hotel'
+data = 'Restaurant'
 sign = 'train'
 
 if __name__ == '__main__':

@@ -80,7 +80,7 @@ def inference(opts, model, inputs, labels, criterion):
     return loss, t1 - t0, predicted, labels
 
 
-def evaluate(_preds, _targets):
+			def evaluate(_preds, _targets):
     report = classification_report(_preds,
                                    _targets,
                                    output_dict=True,

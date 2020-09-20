@@ -16,7 +16,7 @@ experiment_path = 'outputs'
 
 if __name__ == '__main__':
     arg = argparse.ArgumentParser('Sentiment Analysis Evaluation Module')
-    arg.add_argument('-f', '--config', default=os.path.join('config', 'phobert_aivivn.yaml'))
+    arg.add_argument('-f', '--config', default=os.path.join('config', 'multilingual_bert_aivivn.yaml'))
     args = arg.parse_args()
     args = config_parsing(args.config)
     logger = get_logger(f'Evaluation_{args.encoder}_{args.dataset}')
@@ -24,9 +24,9 @@ if __name__ == '__main__':
 
     enc = PhoBertEncoder()
     net = SentimentAnalysisModel(enc, 768, args.num_classes, device=args.device)
-    net = torch.nn.DataParallel(net)
+    net = torch.nn.DataParallel(net).to(args.device)
 
-    net.eval()
+#     net.eval()
 
     if hasattr(args, 'pretrained'):
         net.load_state_dict(torch.load(args.pretrained))
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         dataset = []
 
     df = pd.DataFrame(columns=['id', 'label'])
-
+    net = net.eval()
     for idx, (id, sents) in enumerate(tqdm(dataset)):
         sents = sents.unsqueeze(0)
 
@@ -55,6 +55,7 @@ if __name__ == '__main__':
                     preds = preds.detach().cpu().numpy()
                 preds = np.argmax(preds, 1)[0]
                 df.loc[len(df)] = [id, preds]
+                print(f'Done {idx}/{len(dataset)}')
             except Exception as ex:
                 logger.info(sents)
                 logger.exception(ex)
