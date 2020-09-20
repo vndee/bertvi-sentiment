@@ -21,6 +21,7 @@ from hybrid import BiLSTM_Attention
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from transformers.optimization import AdamW
+from slot_attention import ModelSlotAttention
 from transformers import get_cosine_schedule_with_warmup
 from sklearn.model_selection import KFold, StratifiedKFold
 
@@ -35,6 +36,7 @@ except Exception as ex:
 experiment_path = 'outputs'
 
 configs = [
+    'slot_attn_vlsp_2016.yaml',
     'bilstm_vlsp_2016.yaml',
     'phobert_vlsp_2016.yaml',
     'phobert_uit_vsfc.yaml',
@@ -115,6 +117,12 @@ if __name__ == '__main__':
         enc = PhoBertEncoder()
         net = BiLSTM_Attention(enc)
         net = net.to(opts.device)
+    elif opts.encoder == 'slot_attn':
+        enc = PhoBertEncoder()
+        net = ModelSlotAttention(enc)
+        net = net.to(opts.device)
+
+    logger.info(net)
 
     if hasattr(opts, 'pretrained'):
         net.load_state_dict(torch.load(opts.pretrained))
@@ -261,7 +269,7 @@ if __name__ == '__main__':
             df.loc[len(df)] = [epoch, train_acc, val_acc, train_loss, val_loss, train_f1, val_f1]
 
             if val_f1 > best_checkpoint:
-                best_checkpoint = val_loss
+                best_checkpoint = val_f1
                 logger.info(f'New state-of-the-art model detected. Saved to {experiment_path}.')
                 torch.save(net.state_dict(), os.path.join(experiment_path, 'checkpoints', f'checkpoint_best.vndee'))
                 with open(os.path.join(experiment_path, 'checkpoints', 'best.json'), 'w+') as stream:
