@@ -36,7 +36,7 @@ except Exception as ex:
 experiment_path = 'outputs'
 
 configs = [
-    'slot_attn_vlsp_2016.yaml',
+    # 'slot_attn_vlsp_2016.yaml',
     'bilstm_vlsp_2016.yaml',
     'phobert_vlsp_2016.yaml',
     'phobert_uit_vsfc.yaml',
