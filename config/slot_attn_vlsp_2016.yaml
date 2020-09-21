@@ -1,8 +1,8 @@
 device: cuda
 dataset: vlsp2016
 encoder: slot_attn
-epochs: 20
-batch_size: 8
+epochs: 1
+batch_size: 1
 feature_shape: 768
 num_classes: 3
 max_length: 259

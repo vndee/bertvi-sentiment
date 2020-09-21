@@ -4,7 +4,7 @@ from transformers import AutoModel
 
 
 class SlotAttention(nn.Module):
-    def __init__(self, num_slots, dim, iters=5, eps=1e-8, hidden_dim=128):
+    def __init__(self, num_slots, dim, iters=7, eps=1e-8, hidden_dim=128):
         super(SlotAttention, self).__init__()
         self._num_slots = num_slots
         self._iters = iters
