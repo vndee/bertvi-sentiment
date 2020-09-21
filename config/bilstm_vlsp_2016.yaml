@@ -1,7 +1,7 @@
 device: cuda
 dataset: vlsp2016
 encoder: bilstm
-epochs: 20
+epochs: 50
 batch_size: 8
 feature_shape: 768
 num_classes: 3
@@ -11,6 +11,6 @@ learning_rate: 0.01
 momentum: 0.9
 num_workers: 4
 random_seed: 101
-accumulation_steps: 100
+accumulation_steps: 600
 kfold: 5
-pretrained: outputs/bilstm_vlsp2016/checkpoints/checkpoint_best.vndee
+#pretrained: outputs/bilstm_vlsp2016/checkpoints/checkpoint_best.vndee
