@@ -7,7 +7,7 @@ feature_shape: 768
 num_classes: 3
 max_length: 259
 tokenizer_type: phobert
-learning_rate: 0.001
+learning_rate: 0.01
 momentum: 0.9
 num_workers: 4
 random_seed: 101
