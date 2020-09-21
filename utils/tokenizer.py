@@ -46,7 +46,7 @@ class PhoBertTokenizer:
 
 
 class BertViTokenizer:
-    def __init__(self, max_length=512, shortcut_pretrained='bert-base-multilingual-cased'):
+    def __init__(self, max_length=256, shortcut_pretrained='bert-base-multilingual-cased'):
         self.tokenizer = BertTokenizer.from_pretrained(shortcut_pretrained,
                                                        max_length=max_length,
                                                        padding_side='right',
@@ -54,9 +54,11 @@ class BertViTokenizer:
         self.max_length = max_length
 
     def __call__(self, x):
-        input_ids = torch.tensor([self.tokenizer.encode(x,
-                                                        add_special_tokens=True,
-                                                        padding='max_length',
-                                                        truncation='longest_first',
-                                                        max_length=self.max_length)])
-        return input_ids.squeeze(0)
+        # input_ids = torch.tensor([self.tokenizer.encode(x,
+        #                                                 add_special_tokens=True,
+        #                                                 padding='max_length',
+        #                                                 truncation='longest_first',
+        #                                                 max_length=self.max_length)])
+        # return input_ids.squeeze(0)
+        return self.tokenizer(x, return_tensors='pt', add_special_tokens=True, padding='max_length',
+                              truncation='longest_first', max_length=self.max_length)['input_ids']

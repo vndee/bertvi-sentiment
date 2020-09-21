@@ -16,6 +16,7 @@ from classifier.model import SentimentAnalysisModel
 from utils.optimizer import set_seed, create_optimizer
 from classifier.phobert_sequence_clf import PhoBertForSequenceClassification
 from models.phobert import PhoBertEncoder
+from transformers import BertForSequenceClassification, BertConfig, BertTokenizer
 from models.bert import BertEncoder
 from hybrid import BiLSTM_Attention
 from torch.utils.data import DataLoader
@@ -48,7 +49,7 @@ configs = [
 
 net = None
 arg = argparse.ArgumentParser(description='BERTvi-sentiment Trainer')
-arg.add_argument('-f', '--config', default=os.path.join('config', configs[0]))
+arg.add_argument('-f', '--config', default=os.path.join('config', configs[7]))
 args = arg.parse_args()
 
 
@@ -108,8 +109,10 @@ if __name__ == '__main__':
         enc = PhoBertEncoder()
         net = SentimentAnalysisModel(enc, 768, opts.num_classes, device=opts.device).to(opts.device)
     elif opts.encoder == 'bert':
-        enc = BertEncoder()
-        net = SentimentAnalysisModel(enc, 768, opts.num_classes, device=opts.device).to(opts.device)
+        config_bert = BertConfig.from_pretrained('bert-base-uncased')
+        config_bert.num_labels = 3
+        net = BertForSequenceClassification.from_pretrained('bert-base-uncased', config=config_bert)
+        net = net.to(opts.device)
     elif opts.encoder == 'roberta_clf':
         net = PhoBertForSequenceClassification()
         net = net.net.to(opts.device)
@@ -194,12 +197,10 @@ if __name__ == '__main__':
 
         step, loss = 0, None
         for idx, item in enumerate(tqdm(train_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
-            sents, labels = item[0].to(opts.device), \
-                            item[1].to(opts.device)
-
+            sents, labels = item[0].to(opts.device), item[1].to(opts.device)
             optimizer.zero_grad()
             mask = (sents > 0).to(opts.device)
-            preds = net(sents, attention_mask=mask)
+            preds = net(input_ids=sents, attention_mask=mask)
             loss = criterion(preds, labels)
 
             loss.backward()

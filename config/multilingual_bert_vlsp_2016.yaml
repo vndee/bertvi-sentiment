@@ -1,12 +1,14 @@
 device: cuda
 dataset: vlsp2016
 encoder: bert
-epochs: 5
+epochs: 10
 batch_size: 1
 feature_shape: 768
 num_classes: 2
-max_length: 512
+max_length: 256
 tokenizer_type: bert-base-multilingual-cased
 num_workers: 4
 learning_rate: 0.001
 momentum: 0.9
+accumulation_steps: 25
+random_seed: 101
