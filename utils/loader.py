@@ -13,8 +13,8 @@ class VLSP2016(Dataset):
     def __init__(self,
                  file='SA-2016.train',
                  path=os.path.join('data', 'VLSP2016'),
-                 max_length=512,
-                 tokenizer_type=BERTvi[0]):
+                 max_length=256,
+                 tokenizer_type=BERTvi[1]):
         super(VLSP2016, self).__init__()
 
         self.df = pd.read_csv(os.path.join(path, file),

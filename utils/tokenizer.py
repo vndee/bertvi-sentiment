@@ -47,10 +47,7 @@ class PhoBertTokenizer:
 
 class BertViTokenizer:
     def __init__(self, max_length=256, shortcut_pretrained='bert-base-multilingual-cased'):
-        self.tokenizer = BertTokenizer.from_pretrained(shortcut_pretrained,
-                                                       max_length=max_length,
-                                                       padding_side='right',
-                                                       truncation='longest_first')
+        self.tokenizer = BertTokenizer.from_pretrained(shortcut_pretrained)
         self.max_length = max_length
 
     def __call__(self, x):
@@ -61,4 +58,4 @@ class BertViTokenizer:
         #                                                 max_length=self.max_length)])
         # return input_ids.squeeze(0)
         return self.tokenizer(x, return_tensors='pt', add_special_tokens=True, padding='max_length',
-                              truncation='longest_first', max_length=self.max_length)['input_ids']
+                              truncation='longest_first', max_length=self.max_length)['input_ids'].squeeze(0)

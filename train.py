@@ -111,6 +111,7 @@ if __name__ == '__main__':
     elif opts.encoder == 'bert':
         config_bert = BertConfig.from_pretrained('bert-base-uncased')
         config_bert.num_labels = 3
+
         net = BertForSequenceClassification.from_pretrained('bert-base-uncased', config=config_bert)
         net = net.to(opts.device)
     elif opts.encoder == 'roberta_clf':
@@ -179,11 +180,11 @@ if __name__ == '__main__':
     logger.info(f'Training..')
     train_loader = torch.utils.data.DataLoader(dataset,
                                                batch_size=opts.batch_size,
-                                               shuffle=True,
+                                               shuffle=False,
                                                num_workers=opts.num_workers)
     valid_loader = torch.utils.data.DataLoader(test_dataset,
                                                batch_size=opts.batch_size,
-                                               shuffle=True,
+                                               shuffle=False,
                                                num_workers=opts.num_workers)
 
     optimizer.zero_grad()
@@ -199,10 +200,13 @@ if __name__ == '__main__':
         for idx, item in enumerate(tqdm(train_loader, desc=f'Training EPOCH {epoch}/{opts.epochs}')):
             sents, labels = item[0].to(opts.device), item[1].to(opts.device)
             optimizer.zero_grad()
-            mask = (sents > 0).to(opts.device)
+            mask = (sents > 0).type(torch.LongTensor).to(opts.device)
+
             preds = net(input_ids=sents, attention_mask=mask)
+            logger.info('Checkpoint 1')
             loss = criterion(preds, labels)
 
+            logger.info('Checkpoint 2')
             loss.backward()
             if idx % opts.accumulation_steps:
                 optimizer.step()
@@ -237,7 +241,7 @@ if __name__ == '__main__':
                 sents, labels = item[0].to(opts.device), \
                                 item[1].to(opts.device)
 
-                mask = (sents > 0).to(opts.device)
+                mask = (sents > 0).type(torch.LongTensor).to(opts.device)
                 preds = net(sents, attention_mask=mask)
                 loss = criterion(preds, labels)
 
