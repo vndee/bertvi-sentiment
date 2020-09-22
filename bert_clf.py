@@ -1,8 +1,9 @@
 import os
+import sys
 import torch
+import logging
 import argparse
 import pandas as pd
-from utils.logger import get_logger
 
 from transformers import AdamW
 from transformers import Trainer, TrainingArguments
@@ -11,7 +12,24 @@ from transformers import BertForSequenceClassification, BertConfig, BertTokenize
 
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
-logger = get_logger('Transformers for VSA')
+
+def get_logger(logger_name='default'):
+    """
+    Get logging and format
+    All logs will be saved into logs/log-DATE (default)
+    Default size of log file = 15m
+    :param logger_name:
+    :return:
+    """
+    log = logging.getLogger(logger_name)
+    log.setLevel(logging.DEBUG)
+    log_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setFormatter(log_format)
+    log.addHandler(ch)
+
+    return log
 
 
 def load_data(root='data', data='VLSP2016', is_train=True):
@@ -74,6 +92,8 @@ def compute_metrics(pred):
 
 
 if __name__ == '__main__':
+    logger = get_logger('Transformers for VSA')
+
     # argument parsing
     argument_parser = argparse.ArgumentParser(description='Fine-tune transformer models for '
                                                           'Vietnamese Sentiment Analysis.')
