@@ -8,7 +8,7 @@ import pandas as pd
 from transformers import AdamW
 from transformers import Trainer, TrainingArguments
 from transformers import get_linear_schedule_with_warmup
-from transformers import BertForSequenceClassification, BertConfig, BertTokenizer
+from transformers import AutoModelForSequenceClassification, AutoConfig, AutoTokenizer
 
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     # argument parsing
     argument_parser = argparse.ArgumentParser(description='Fine-tune transformer models for '
                                                           'Vietnamese Sentiment Analysis.')
-    argument_parser.add_argument('--model', type=str, default='bert')
+    argument_parser.add_argument('--model', type=str, default='bert-base-uncased')
     argument_parser.add_argument('--freeze_encoder', type=bool, default=True)
     argument_parser.add_argument('--epoch', type=int, default=1)
     argument_parser.add_argument('--learning_rate', type=int, default=1e-5)
@@ -122,12 +122,11 @@ if __name__ == '__main__':
     assert test_texts.__len__() == test_labels.__len__(), IndexError
 
     # init model
-    if args.model == 'bert':
-        config = BertConfig.from_pretrained('bert-base-uncased')
-        config.num_labels = args.num_labels
+    config = AutoConfig.from_pretrained('bert-base-uncased')
+    config.num_labels = args.num_labels
 
-        net = BertForSequenceClassification.from_pretrained('bert-base-uncased', config=config)
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    net = AutoModelForSequenceClassification.from_pretrained('bert-base-uncased', config=config)
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 
     # encode data
     train_encodings, test_encodings = tokenizer(train_texts,
