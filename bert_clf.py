@@ -122,11 +122,11 @@ if __name__ == '__main__':
     assert test_texts.__len__() == test_labels.__len__(), IndexError
 
     # init model
-    config = AutoConfig.from_pretrained('bert-base-uncased')
+    config = AutoConfig.from_pretrained(args.model)
     config.num_labels = args.num_labels
 
-    net = AutoModelForSequenceClassification.from_pretrained('bert-base-uncased', config=config)
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+    net = AutoModelForSequenceClassification.from_pretrained(args.model, config=config)
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
 
     # encode data
     train_encodings, test_encodings = tokenizer(train_texts,
