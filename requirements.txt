@@ -35,5 +35,5 @@ tokenizers==0.8.1rc1
 torch==1.6.0
 tqdm==4.48.0
 transformers==3.0.2
-urllib3==1.25.10
+urllib3==1.26.5
 vncorenlp==1.0.3
